@@ -1,0 +1,221 @@
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+    # restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    networks:
+      - HealthSenseAI-net
+    ports:
+      - 9200:9200
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period:
+        30s
+    # restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.1
+    container_name: kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - HealthSenseAI-net
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    # restart: unless-stopped
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: api-gateway
+    env_file:
+      - ./backend/api-gateway/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  admin-management-service:
+    build: ./backend/admin-management-service
+    container_name: admin-management-service
+    env_file:
+      - ./backend/admin-management-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50001"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  ai-symptom-checker-service:
+    build: ./backend/ai-symptom-checker-service
+    container_name: ai-symptom-checker-service
+    env_file:
+      - ./backend/ai-symptom-checker-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50002"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  appointment-service:
+    build: ./backend/appointment-service
+    container_name: appointment-service
+    env_file:
+      - ./backend/appointment-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50003"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  doctor-management-service:
+    build: ./backend/doctor-management-service
+    container_name: doctor-management-service
+    env_file:
+      - ./backend/doctor-management-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50004"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  notification-service:
+    build: ./backend/notification-service
+    container_name: notification-service
+    env_file:
+      - ./backend/notification-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50005"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  patient-management-service:
+    build: ./backend/patient-management-service
+    container_name: patient-management-service
+    env_file:
+      - ./backend/patient-management-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50006"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  payment-service:
+    build: ./backend/payment-service
+    container_name: payment-service
+    env_file:
+      - ./backend/payment-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50007"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  telemedicine-service:
+    build: ./backend/telemedicine-service
+    container_name: telemedicine-service
+    env_file:
+      - ./backend/telemedicine-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50008"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    env_file:
+      - ./backend/user-service/.env
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "50009"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    # restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    networks:
+      - HealthSenseAI-net
+    expose:
+      - "80"
+    # restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api-gateway
+      - frontend
+    networks:
+      - HealthSenseAI-net
+    # restart: unless-stopped
+
+volumes:
+  esdata:
+
+networks:
+  HealthSenseAI-net:
+    driver: bridge
