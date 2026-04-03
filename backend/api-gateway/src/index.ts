@@ -4,7 +4,7 @@ import 'dotenv/config'
 import {limiter} from './middlewares/rate-limit-redis'
 import routes from "./routes";
 import { CONFIG } from './config/envConfig';
-
+import { optionalAuth } from './middlewares/auth';
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use(limiter)
 
-app.use("/api", routes);
+app.use("/api", optionalAuth, routes);
 
 app.listen(CONFIG.PORT, () => {
   console.log(`API Gateway running on port ${CONFIG.PORT}`);
