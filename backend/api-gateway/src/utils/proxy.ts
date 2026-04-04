@@ -7,14 +7,27 @@ export const proxy = (targetUrl: string) => {
     target: targetUrl,
     changeOrigin: true,
     pathRewrite: (path, req) => {
-      const prefix = req.baseUrl; 
+      const prefix = req.baseUrl;
       return path.replace(new RegExp(`^${prefix}`), "") || "/";
     },
     logLevel: "debug",
-    onProxyReq: (proxyReq, req, res) => {
-      if ((req as any).user) {
-        proxyReq.setHeader("x-user-id", (req as any).user.id);
-        proxyReq.setHeader("x-user-role", (req as any).user.role);
+    onProxyReq: (proxyReq, req: any, res) => {
+      if (req.user) {
+        proxyReq.setHeader("x-user-id", req.user.id);
+        proxyReq.setHeader("x-user-role", req.user.role);
+      }
+
+      if (
+        req.body &&
+        Object.keys(req.body).length > 0 &&
+        req.method !== "GET"
+      ) {
+        const bodyData = JSON.stringify(req.body);
+
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
+        proxyReq.write(bodyData);
       }
       console.log(
         `Proxying ${req.method} ${req.originalUrl} -> ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`,
