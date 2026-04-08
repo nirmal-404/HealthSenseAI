@@ -11,10 +11,7 @@ export interface XRequest extends Request {
 export interface XAuthUser {
     id: number;
     email: string;
+    role: string;
     displayName: string;
     phoneNumber: string;
-    clientId: number;
-    companyId: number;
-    isMaster: boolean;
-    isActive: boolean;
 }

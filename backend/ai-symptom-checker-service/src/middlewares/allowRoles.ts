@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import { XRequest } from "../types/XRequest";
 
 export const allowRoles = (...allowedRoles: string[]) => {
