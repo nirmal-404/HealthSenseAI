@@ -4,6 +4,9 @@ import MedicalHistory from "../models/MedicalHistory";
 import Patient from "../models/Patient";
 import Prescription from "../models/Prescription";
 import { ApiError } from "../utils/ApiError";
+import axios from "axios";
+import { RegisterUserDTO } from "../types/UserManagemetTypes";
+import { CONFIG } from "../config/envConfig";
 
 type RegisterPatientInput = {
   firstName: string;
@@ -12,7 +15,8 @@ type RegisterPatientInput = {
   phoneNumber: string;
   dateOfBirth: Date;
   gender: "male" | "female" | "other";
-  address?: string;
+  address: string;
+  password: string;
   bloodGroup?: string;
   allergies?: string[];
   emergencyContact?: string;
@@ -27,6 +31,22 @@ type UploadDocumentInput = {
 
 export const registerPatientService = async (payload: RegisterPatientInput) => {
   const existingPatient = await Patient.findOne({ email: payload.email.toLowerCase() });
+
+  const userServicePayload: RegisterUserDTO = {
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    email: payload.email,
+    phoneNumber: payload.phoneNumber,
+    dateOfBirth: new Date(payload.dateOfBirth),
+    gender: payload.gender,
+    address: payload.address,
+    password: payload.password,
+    role: "patient",
+  }
+  console.log("ROUTING TO USER_SERVICE_URL", CONFIG.USER_SERVICE_URL)
+  const userServiceResponse = await axios.post(CONFIG.USER_SERVICE_URL, userServicePayload);
+  console.log(userServiceResponse);
+  // TODO: remove the duplicating propeties in the patient model and save the userId comming form this response
 
   if (existingPatient) {
     throw new ApiError(httpStatus.CONFLICT, "Patient with this email already exists");

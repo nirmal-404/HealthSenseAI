@@ -14,11 +14,22 @@ import { catchAsync } from "../utils/catchAsync";
 import httpStatus from "http-status";
 import { XRequest } from "../types/XRequest";
 import { XResponse } from "../types/XResponse";
+import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
 export const registerController = catchAsync(async (req: XRequest, res: Response) => {
-  const { email, password, role } = req.body;
 
-  const result = await registerService({ email, password, role });
+  const registerUserDTO: RegisterUserDTO = {
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    email: req.body.email,
+    phoneNumber: req.body.phoneNumber,
+    dateOfBirth: req.body.dateOfBirth,
+    gender: req.body.gender,
+    address: req.body.address,
+    password: req.body.password,
+    role: req.body.role,
+  };
+  const result = await registerService(registerUserDTO);
 
   const response: XResponse = {
     message: "Registration successful. Please verify your email.",

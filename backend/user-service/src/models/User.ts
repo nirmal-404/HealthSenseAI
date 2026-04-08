@@ -4,8 +4,14 @@ import bcrypt from "bcrypt";
 export interface IUser extends Document {
   userId: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
   passwordHash: string;
   role: "patient" | "doctor" | "admin";
+  dateOfBirth: Date
+  gender: "male" | "female" | "other";
+  address: string;
   isActive: boolean;
   lastLogin: Date | null;
   isEmailVerified: boolean;
@@ -28,6 +34,16 @@ const userSchema = new mongoose.Schema<IUser>(
       default: () => new mongoose.Types.ObjectId().toString(),
       unique: true,
     },
+    firstName: {
+      type: String,
+      required: [true, "firstName is required"],
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      required: [true, "lastName is required"],
+      trim: true,
+    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -35,6 +51,11 @@ const userSchema = new mongoose.Schema<IUser>(
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+    },
+    phoneNumber: {
+      type: String,
+      required: [true, "phoneNumber is required"],
+      trim: true,
     },
     passwordHash: {
       type: String,
@@ -46,6 +67,20 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       enum: ["patient", "doctor", "admin"],
       default: "patient",
+    },
+    dateOfBirth: {
+      type: Date,
+      required: [true, "dateOfBirth is required"],
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      required: [true, "gender is required"],
+    },
+    address: {
+      type: String,
+      default: "",
+      trim: true,
     },
     isActive: {
       type: Boolean,

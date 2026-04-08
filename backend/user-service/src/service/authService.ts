@@ -8,10 +8,11 @@ import { CONFIG } from "../config/envConfig";
 import httpStatus from "http-status";
 import jwt from "jsonwebtoken";
 import { JWTPayload } from "../types/JWTPayload";
+import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
-export const registerService = async ({ email, password, role = "patient" }: { email: string, password: string, role: string }) => {
+export const registerService = async (registerUserDTO: RegisterUserDTO) => {
   try {
-    const existingUser = await User.findOne({ email: email });
+    const existingUser = await User.findOne({ email: registerUserDTO.email });
     if (existingUser) throw new ApiError(httpStatus.CONFLICT, "Email already in use");
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -21,9 +22,15 @@ export const registerService = async ({ email, password, role = "patient" }: { e
       .digest("hex");
 
     const user = await User.create({
-      email,
-      passwordHash: password,
-      role,
+      firstName: registerUserDTO.firstName,
+      lastName: registerUserDTO.lastName,
+      email: registerUserDTO.email,
+      phoneNumber: registerUserDTO.phoneNumber,
+      passwordHash: registerUserDTO.password,
+      role: registerUserDTO.role,
+      dateOfBirth: registerUserDTO.dateOfBirth,
+      gender: registerUserDTO.gender,
+      address: registerUserDTO.address,
       emailVerificationToken: hashedVerificationToken,
       emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
     });
