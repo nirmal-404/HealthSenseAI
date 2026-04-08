@@ -15,6 +15,21 @@ export const symptomCheckCreateSchema = {
   })
 };
 
+export const followUpAnswersSchema = {
+  body: Joi.object().keys({
+    followUpAnswers: Joi.array()
+      .items(
+        Joi.object({
+          question: Joi.string().required(),
+          answer: Joi.string().trim().min(1).max(500).required(),
+        })
+      )
+      .min(1)
+      .max(5)
+      .required(),
+  })
+};
+
 export const symptomCheckByIdSchema = {
   params: Joi.object().keys({
     checkId: Joi.string().required()

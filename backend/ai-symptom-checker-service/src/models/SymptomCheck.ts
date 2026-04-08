@@ -37,11 +37,19 @@ const symptomCheckSchema = new mongoose.Schema(
             index: true,
         },
 
+        threadId: { type: String, index: true },
+
         rawInput: {
             type: String,
             required: true,
             trim: true,
             maxlength: 2000,
+        },
+
+        status: {
+            type: String,
+            enum: ["pending_answers", "completed"],
+            default: "completed",
         },
 
         symptoms: {
@@ -79,14 +87,6 @@ const symptomCheckSchema = new mongoose.Schema(
             default: [],
         },
 
-        threadId: { type: String, index: true },  // LangGraph checkpoint key
-
-        status: {
-            type: String,
-            enum: ["pending_answers", "completed"],
-            default: "completed",
-        },
-
         followUpAnswers: [{ question: String, answer: String }],
 
         reviewedByDoctor: {
@@ -108,4 +108,6 @@ const symptomCheckSchema = new mongoose.Schema(
 
 symptomCheckSchema.index({ patientId: 1, createdAt: -1 });
 
-module.exports = mongoose.model("SymptomCheck", symptomCheckSchema);
+const SymptomCheck = mongoose.model("SymptomCheck", symptomCheckSchema);
+
+export default SymptomCheck;

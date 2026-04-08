@@ -3,8 +3,11 @@ import "dotenv/config";
 import cookieParser from "cookie-parser"
 import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
+import connectDB from './config/db'
 
 const app = express();
+
+connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
