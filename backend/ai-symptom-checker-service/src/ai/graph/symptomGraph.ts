@@ -54,16 +54,15 @@ async function getGraph() {
   return compiledGraph;
 }
 
-export async function startSymptomPipeline(
-  { rawInput, additionalContext, threadId }:
-    { rawInput: string; additionalContext?: string; threadId: string; }
-) {
+export async function startSymptomPipeline(input: {
+  rawInput: string; additionalContext?: string; threadId: string;
+}) {
   const graph = await getGraph();
 
-  const config = { configurable: { thread_id: threadId } };
+  const config = { configurable: { thread_id: input.threadId } };
 
   const result = await graph.invoke(
-    { rawInput, additionalContext },
+    { rawInput: input.rawInput, additionalContext: input.additionalContext },
     config
   );
 
@@ -78,15 +77,14 @@ export async function startSymptomPipeline(
   };
 }
 
-export async function resumeSymptomPipeline(
-  { threadId, followUpAnswers }:
-    { threadId: string, followUpAnswers: any }
-) {
+export async function resumeSymptomPipeline(input: {
+  threadId: string, followUpAnswers: any
+}) {
   const graph = await getGraph();
-  const config = { configurable: { thread_id: threadId } };
+  const config = { configurable: { thread_id: input.threadId } };
 
   const result = await graph.invoke(
-    { followUpAnswers },
+    { followUpAnswers: input.followUpAnswers },
     config
   );
 

@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { checkSymptomsController, answerFollowUpQuestionsController } from "../controller/symptomCheckerController";
-import { followUpAnswersSchema } from "../validations/aiResponseValidation";
+import { followUpAnswersSchema, symptomCheckCreateSchema } from "../validations/aiResponseValidation";
 import { validate } from "../middlewares/validate";
 import requireAuth from "../middlewares/requireAuth";
 
 const router = Router();
 
-router.post("/symptom-check", requireAuth, checkSymptomsController);
+router.post("/symptom-check",
+  requireAuth,
+  validate(symptomCheckCreateSchema),
+  checkSymptomsController
+);
 
 router.post(
   "/symptom-check/:checkId/answer",

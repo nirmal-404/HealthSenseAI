@@ -1,67 +1,80 @@
 import { v4 as uuidv4 } from "uuid";
 import SymptomCheck from "../models/SymptomCheck";
 import { startSymptomPipeline, resumeSymptomPipeline } from "../ai/graph/symptomGraph";
+import httpStatus from "http-status"
+import { ApiError } from "../utils/ApiError";
 
 export const checkSymptomsService = async (input: {
-    rawInput: string;
-    additionalContext?: string;
-    patientId: string;
+    rawInput: string; additionalContext?: string; patientId: string;
 }) => {
-    const threadId = uuidv4();
+    try {
+        const threadId = uuidv4();
 
-    const result = await startSymptomPipeline({
-        rawInput: input.rawInput,
-        additionalContext: input.additionalContext,
-        threadId
-    });
+        const data = {
+            rawInput: input.rawInput,
+            additionalContext: input.additionalContext,
+            threadId
+        }
+        const result = await startSymptomPipeline(data);
 
-    const check = await SymptomCheck.create({
-        patientId: input.patientId,
-        threadId,
-        rawInput: input.rawInput,
-        status: "pending_answers",
-        symptoms: result.symptoms,
-        overallSeverity: result.overallSeverity,
-        urgencyLevel: result.urgencyLevel,
-        aiSuggestions: result.aiSuggestions,
-        recommendedSpecialties: result.recommendedSpecialties,
-        followUpQuestions: result.followUpQuestions,
-        metadata: {
-            modelUsed: "gemini-1.5-pro",
-            extractionConfidence: result.extractionConfidence,
-        },
-    });
+        const check = await SymptomCheck.create({
+            patientId: input.patientId,
+            threadId,
+            rawInput: input.rawInput,
+            status: "pending_answers",
+            symptoms: result.symptoms,
+            overallSeverity: result.overallSeverity,
+            urgencyLevel: result.urgencyLevel,
+            aiSuggestions: result.aiSuggestions,
+            recommendedSpecialties: result.recommendedSpecialties,
+            followUpQuestions: result.followUpQuestions,
+            metadata: {
+                modelUsed: "gemini-1.5-pro",
+                extractionConfidence: result.extractionConfidence,
+            },
+        });
 
-    return check;
+        return check;
+    } catch (error: any) {
+        console.error(error);
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
+    }
 }
 
-export const answerFollowUpQuestionsService = async (
-    { checkId, patientId, followUpAnswers }
-        : { checkId: string, patientId: string, followUpAnswers: any }
-) => {
-    const check = await SymptomCheck.findById(checkId);
+export const answerFollowUpQuestionsService = async (input: {
+    checkId: string, patientId: string, followUpAnswers: any
+}) => {
+    try {
+        const check = await SymptomCheck.findById(input.checkId);
 
-    if (!check)
-        throw Object.assign(new Error("Not found."), { statusCode: 404 });
-    // if (check.patientId.toString() !== patientId.toString())
-    //     throw Object.assign(new Error("Forbidden."), { statusCode: 403 });
-    if (check.status === "completed")
-        throw Object.assign(new Error("This check is already completed."), { statusCode: 409 });
+        if (!check)
+            throw new ApiError(httpStatus.NOT_FOUND, "No check found");
+        if (check.patientId.toString() !== input.patientId.toString())
+            throw new ApiError(httpStatus.FORBIDDEN, "Forbidden");
+        if (check.status === "completed")
+            throw new ApiError(httpStatus.CONFLICT, "This check is already completed.");
 
-    const refined = await resumeSymptomPipeline({
-        threadId: check.threadId!,
-        followUpAnswers,
-    });
+        const data = {
+            threadId: check.threadId!,
+            followUpAnswers: input.followUpAnswers,
+        }
+        const refined = await resumeSymptomPipeline(data);
 
-    Object.assign(check, {
-        status: "completed",
-        overallSeverity: refined.overallSeverity,
-        urgencyLevel: refined.urgencyLevel,
-        aiSuggestions: refined.aiSuggestions,
-        recommendedSpecialties: refined.recommendedSpecialties,
-        followUpAnswers: followUpAnswers,
-    });
+        Object.assign(check, {
+            status: "completed",
+            overallSeverity: refined.overallSeverity,
+            urgencyLevel: refined.urgencyLevel,
+            aiSuggestions: refined.aiSuggestions,
+            recommendedSpecialties: refined.recommendedSpecialties,
+            followUpAnswers: input.followUpAnswers,
+        });
 
-    await check.save();
-    return check;
+        await check.save();
+        return check;
+    } catch (error: any) {
+        console.error(error);
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
+    }
 }
