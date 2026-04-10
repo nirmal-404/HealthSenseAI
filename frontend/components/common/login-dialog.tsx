@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,32 +8,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import CommonForm from './Form';
+import { loginFormControls } from '@/config';
 
-interface LoginDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+const initialFormData = Object.fromEntries(
+  loginFormControls.map(ctrl => [ctrl.name, ""])
+);
 
-export default function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export default function LoginDialog({ open, onOpenChange, setIsSignupOpen }: any) {
+  const [formData, setFormData] = useState(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('Login:', { email, password });
-    
-    setIsLoading(false);
-    setEmail('');
-    setPassword('');
-    onOpenChange(false);
+    // setIsSubmitting(false);
+    // setFormData(initialFormData);
+    // onOpenChange(false);
+
   };
 
   return (
@@ -47,48 +40,21 @@ export default function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="login-email">Email</Label>
-            <Input
-              id="login-email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="login-password">Password</Label>
-            <Input
-              id="login-password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
+        <CommonForm 
+        formControls={loginFormControls}
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleSubmit}
+        buttonText={isSubmitting ? "Logging In..." : "Login"}
+        isBtnDisabled={isSubmitting}
+        />
 
         <div className="text-center text-sm">
           <span className="text-foreground/70">Don&apos;t have an account? </span>
           <button
             onClick={() => {
               onOpenChange(false);
-              // You can emit an event or call a callback to open signup
+              setIsSignupOpen(true)
             }}
             className="text-primary hover:underline font-medium"
           >
