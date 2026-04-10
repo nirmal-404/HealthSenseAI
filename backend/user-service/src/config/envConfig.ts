@@ -16,7 +16,6 @@ type ConfigType = {
   JWT_EXPIRES_IN: SignOptions["expiresIn"];
   JWT_REFRESH_EXPIRES_IN: SignOptions["expiresIn"];
   SESSION_EXPIRES_DAYS: number;
-  INTERNAL_SERVICE_KEY: string;
   MONGO_URI: string;
   EMAIL_USER: string;
   EMAIL_PASS: string;
@@ -44,8 +43,6 @@ export const CONFIG: ConfigType = {
     (process.env.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"]) || "7d",
   SESSION_EXPIRES_DAYS:
     Number(process.env.SESSION_EXPIRES_DAYS) || 7,
-  INTERNAL_SERVICE_KEY:
-    process.env.INTERNAL_SERVICE_KEY || "internal-dev-key",
   MONGO_URI:
     process.env.MONGO_URI || "mongodb://localhost:27017/healthsenseai",
   EMAIL_USER:

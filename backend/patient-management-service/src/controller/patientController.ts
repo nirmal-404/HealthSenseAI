@@ -2,10 +2,10 @@ import { Response } from "express";
 import httpStatus from "http-status";
 import Patient from "../models/Patient";
 import {
+  createPatientProfileService,
   getPatientDashboardService,
   getPatientMedicalHistoryService,
   getPatientPrescriptionsService,
-  registerPatientService,
   updatePatientProfileService,
   uploadPatientDocumentService,
 } from "../service/patientService";
@@ -15,7 +15,7 @@ import { XRequest } from "../types/XRequest";
 import { XResponse } from "../types/XResponse";
 
 const assertPatientAccess = async (req: XRequest, patientId: string) => {
-  if (req.user?.role === "admin") {
+  if (req.user?.role === "admin" || req.user?.role === "doctor") {
     return;
   }
 
@@ -34,11 +34,15 @@ const assertPatientAccess = async (req: XRequest, patientId: string) => {
   }
 };
 
-export const registerPatientController = catchAsync(async (req: XRequest, res: Response) => {
-  const result = await registerPatientService(req.body);
+export const createPatientProfileController = catchAsync(async (req: XRequest, res: Response) => {
+  if (!req.user?.id) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized: Not logged in");
+  }
+
+  const result = await createPatientProfileService(req.user.id, req.body);
 
   const response: XResponse = {
-    message: "Patient registered successfully",
+    message: "Patient profile created successfully",
     data: result,
   };
 

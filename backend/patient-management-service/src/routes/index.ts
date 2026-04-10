@@ -1,9 +1,9 @@
 import { Router } from "express";
 import {
+  createPatientProfileController,
   getPatientDashboardController,
   getPatientMedicalHistoryController,
   getPatientPrescriptionsController,
-  registerPatientController,
   updatePatientProfileController,
   uploadPatientDocumentController,
 } from "../controller/patientController";
@@ -11,8 +11,8 @@ import { allowRoles } from "../middlewares/allowRoles";
 import requireAuth from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
 import {
+  createPatientProfileValidation,
   patientIdValidation,
-  registerPatientValidation,
   updatePatientValidation,
   uploadDocumentValidation,
 } from "../validations/patientValidations";
@@ -20,11 +20,11 @@ import {
 const router = Router();
 
 router.post(
-  "/register",
+  "/profile",
   requireAuth,
   allowRoles("patient", "admin"),
-  validate(registerPatientValidation),
-  registerPatientController
+  validate(createPatientProfileValidation),
+  createPatientProfileController
 );
 
 router.put(

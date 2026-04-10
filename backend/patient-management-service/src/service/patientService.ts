@@ -5,21 +5,27 @@ import Patient from "../models/Patient";
 import Prescription from "../models/Prescription";
 import { ApiError } from "../utils/ApiError";
 import axios from "axios";
-import { RegisterUserDTO } from "../types/UserManagemetTypes";
 import { CONFIG } from "../config/envConfig";
 
-type RegisterPatientInput = {
+type CreatePatientProfileInput = {
+  bloodGroup?: string;
+  allergies?: string[];
+  emergencyContact?: string;
+};
+
+type UpdatePatientProfileInput = Partial<CreatePatientProfileInput>;
+
+type InternalUserRecord = {
+  id: string;
+  role: "patient" | "doctor" | "admin";
+  isActive: boolean;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  dateOfBirth: Date;
+  dateOfBirth: Date | string;
   gender: "male" | "female" | "other";
-  address: string;
-  password: string;
-  bloodGroup?: string;
-  allergies?: string[];
-  emergencyContact?: string;
+  address?: string;
 };
 
 type UploadDocumentInput = {
@@ -29,41 +35,72 @@ type UploadDocumentInput = {
   description?: string;
 };
 
-export const registerPatientService = async (payload: RegisterPatientInput) => {
-  const { password, ...patientProfilePayload } = payload;
-  const existingPatient = await Patient.findOne({ email: payload.email.toLowerCase() });
+const fetchUserForPatientProfile = async (userMongoId: string): Promise<InternalUserRecord> => {
+  try {
+    const userLookupUrl = `${CONFIG.USER_SERVICE_URL}/internal/users/${encodeURIComponent(userMongoId)}`;
+    const userResponse = await axios.get<{ data?: InternalUserRecord }>(userLookupUrl, {
+      headers: {
+        "x-internal-service-key": CONFIG.JWT_SECRET,
+      },
+      timeout: 5000,
+    });
+
+    const user = userResponse.data?.data;
+    if (!user) {
+      throw new ApiError(httpStatus.BAD_GATEWAY, "User service response did not include user data");
+    }
+
+    return user;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === httpStatus.NOT_FOUND) {
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+      }
+
+      if (status === httpStatus.UNAUTHORIZED || status === httpStatus.FORBIDDEN) {
+        throw new ApiError(httpStatus.BAD_GATEWAY, "User service internal authentication failed");
+      }
+
+      throw new ApiError(httpStatus.BAD_GATEWAY, "Failed to fetch user details from user service");
+    }
+
+    throw error;
+  }
+};
+
+export const createPatientProfileService = async (
+  userMongoId: string,
+  payload: CreatePatientProfileInput
+) => {
+  const existingPatient = await Patient.findOne({ userMongoId });
 
   if (existingPatient) {
-    throw new ApiError(httpStatus.CONFLICT, "Patient with this email already exists");
+    throw new ApiError(httpStatus.CONFLICT, "Patient profile already exists for this user");
   }
 
-  const userServicePayload: RegisterUserDTO = {
-    firstName: patientProfilePayload.firstName,
-    lastName: patientProfilePayload.lastName,
-    email: patientProfilePayload.email,
-    phoneNumber: patientProfilePayload.phoneNumber,
-    dateOfBirth: new Date(patientProfilePayload.dateOfBirth),
-    gender: patientProfilePayload.gender,
-    address: patientProfilePayload.address,
-    password,
-    role: "patient",
+  const user = await fetchUserForPatientProfile(userMongoId);
+
+  if (user.role !== "patient") {
+    throw new ApiError(httpStatus.FORBIDDEN, "Only patient users can create a patient profile");
   }
 
-  const userRegistrationUrl = `${CONFIG.API_GATEWAY_URL}/api/auth/register`;
-  const userServiceResponse = await axios.post(userRegistrationUrl, userServicePayload);
-  const userMongoId = userServiceResponse.data?.data?.id;
-
-  if (!userMongoId) {
-    throw new ApiError(
-      httpStatus.BAD_GATEWAY,
-      "User service response did not include canonical user id"
-    );
+  if (!user.isActive) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Cannot create profile for an inactive user");
   }
 
   const patient = await Patient.create({
-    ...patientProfilePayload,
-    email: patientProfilePayload.email.toLowerCase(),
     userMongoId,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email.toLowerCase(),
+    phoneNumber: user.phoneNumber,
+    dateOfBirth: new Date(user.dateOfBirth),
+    gender: user.gender,
+    address: user.address || "",
+    bloodGroup: payload.bloodGroup || "",
+    allergies: payload.allergies || [],
+    emergencyContact: payload.emergencyContact || "",
   });
 
   return patient;
@@ -71,7 +108,7 @@ export const registerPatientService = async (payload: RegisterPatientInput) => {
 
 export const updatePatientProfileService = async (
   patientId: string,
-  payload: Partial<RegisterPatientInput>
+  payload: UpdatePatientProfileInput
 ) => {
   const patient = await Patient.findOneAndUpdate({ patientId }, payload, {
     new: true,

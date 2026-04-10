@@ -1,19 +1,13 @@
 import Joi from "joi";
 
-export const registerPatientValidation = {
-  body: Joi.object().keys({
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    email: Joi.string().email().required(),
-    phoneNumber: Joi.string().required(),
-    dateOfBirth: Joi.date().required(),
-    gender: Joi.string().valid("male", "female", "other").required(),
-    address: Joi.string().allow(""),
-    password: Joi.string().min(8).required(),
-    bloodGroup: Joi.string().allow(""),
-    allergies: Joi.array().items(Joi.string()).default([]),
-    emergencyContact: Joi.string().allow(""),
-  }),
+export const createPatientProfileValidation = {
+  body: Joi.object()
+    .keys({
+      bloodGroup: Joi.string().allow(""),
+      allergies: Joi.array().items(Joi.string()).default([]),
+      emergencyContact: Joi.string().allow(""),
+    })
+    .min(1),
 };
 
 export const patientIdValidation = {
@@ -28,12 +22,6 @@ export const updatePatientValidation = {
   }),
   body: Joi.object()
     .keys({
-      firstName: Joi.string(),
-      lastName: Joi.string(),
-      phoneNumber: Joi.string(),
-      dateOfBirth: Joi.date(),
-      gender: Joi.string().valid("male", "female", "other"),
-      address: Joi.string().allow(""),
       bloodGroup: Joi.string().allow(""),
       allergies: Joi.array().items(Joi.string()),
       emergencyContact: Joi.string().allow(""),
