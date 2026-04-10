@@ -3,10 +3,12 @@ import "dotenv/config";
 import cookieParser from "cookie-parser";
 import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
-import connectDB from './config/db'
+import connectDB from "./config/db";
 import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
 
 const app = express();
+
+console.log(CONFIG);
 
 connectDB();
 

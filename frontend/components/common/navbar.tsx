@@ -117,8 +117,8 @@ export default function Navbar() {
       )}
 
       {/* Dialogs */}
-      <LoginDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
-      <SignupDialog open={isSignupOpen} onOpenChange={setIsSignupOpen} />
+      <LoginDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} setIsSignupOpen={setIsSignupOpen} />
+      <SignupDialog open={isSignupOpen} onOpenChange={setIsSignupOpen} setIsLoginOpen={setIsLoginOpen} />
     </nav>
   );
 }
