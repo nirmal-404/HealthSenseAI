@@ -3,6 +3,7 @@ type ConfigType = {
   JWT_SECRET: string;
   MONGO_URI: string;
   ENV: string;
+  API_GATEWAY_URL: string;
 
   ADMIN_MANAGEMENT_SERVICE_URL: string;
   AI_SYMPTOM_CHECKER_SERVICE_URL: string;
@@ -21,6 +22,7 @@ export const CONFIG: ConfigType = {
   MONGO_URI:
     process.env.MONGO_URI || "mongodb://localhost:27017/healthsenseai_doctor",
   ENV: process.env.NODE_ENV || "development",
+  API_GATEWAY_URL: process.env.API_GATEWAY_URL || "http://api-gateway:50000",
 
   ADMIN_MANAGEMENT_SERVICE_URL:
     process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",

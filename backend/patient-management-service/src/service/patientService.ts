@@ -30,31 +30,40 @@ type UploadDocumentInput = {
 };
 
 export const registerPatientService = async (payload: RegisterPatientInput) => {
+  const { password, ...patientProfilePayload } = payload;
   const existingPatient = await Patient.findOne({ email: payload.email.toLowerCase() });
-
-  const userServicePayload: RegisterUserDTO = {
-    firstName: payload.firstName,
-    lastName: payload.lastName,
-    email: payload.email,
-    phoneNumber: payload.phoneNumber,
-    dateOfBirth: new Date(payload.dateOfBirth),
-    gender: payload.gender,
-    address: payload.address,
-    password: payload.password,
-    role: "patient",
-  }
-  console.log("ROUTING TO USER_SERVICE_URL", CONFIG.USER_SERVICE_URL)
-  const userServiceResponse = await axios.post(CONFIG.USER_SERVICE_URL, userServicePayload);
-  console.log(userServiceResponse);
-  // TODO: remove the duplicating propeties in the patient model and save the userId comming form this response
 
   if (existingPatient) {
     throw new ApiError(httpStatus.CONFLICT, "Patient with this email already exists");
   }
 
+  const userServicePayload: RegisterUserDTO = {
+    firstName: patientProfilePayload.firstName,
+    lastName: patientProfilePayload.lastName,
+    email: patientProfilePayload.email,
+    phoneNumber: patientProfilePayload.phoneNumber,
+    dateOfBirth: new Date(patientProfilePayload.dateOfBirth),
+    gender: patientProfilePayload.gender,
+    address: patientProfilePayload.address,
+    password,
+    role: "patient",
+  }
+
+  const userRegistrationUrl = `${CONFIG.API_GATEWAY_URL}/api/auth/register`;
+  const userServiceResponse = await axios.post(userRegistrationUrl, userServicePayload);
+  const userMongoId = userServiceResponse.data?.data?.id;
+
+  if (!userMongoId) {
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      "User service response did not include canonical user id"
+    );
+  }
+
   const patient = await Patient.create({
-    ...payload,
-    email: payload.email.toLowerCase(),
+    ...patientProfilePayload,
+    email: patientProfilePayload.email.toLowerCase(),
+    userMongoId,
   });
 
   return patient;

@@ -17,6 +17,33 @@ const systemHeaders = {
   "x-user-role": "admin",
 };
 
+const internalHeaders = {
+  "x-internal-service-key": CONFIG.INTERNAL_SERVICE_KEY,
+};
+
+const syncUserStatusWithUserService = async (
+  userId: string,
+  status: "active" | "suspended"
+) => {
+  const url = `${CONFIG.API_GATEWAY_URL}/api/auth/internal/users/${userId}/status`;
+
+  try {
+    await axios.put(
+      url,
+      { status },
+      {
+        timeout: 5000,
+        headers: internalHeaders,
+      }
+    );
+  } catch (error) {
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      "Failed to sync status to user-service"
+    );
+  }
+};
+
 export const getUsersService = async () => {
   const users = await ManagedUserStatus.find().sort({ updatedAt: -1 });
   return users;
@@ -27,6 +54,8 @@ export const updateUserStatusService = async (
   payload: { status: "active" | "suspended"; userType?: "patient" | "doctor" | "admin" | "unknown" },
   updatedBy: string
 ) => {
+  await syncUserStatusWithUserService(userId, payload.status);
+
   const updated = await ManagedUserStatus.findOneAndUpdate(
     { userId },
     {

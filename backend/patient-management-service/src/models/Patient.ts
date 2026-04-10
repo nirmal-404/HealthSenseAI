@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IPatient extends Document {
   patientId: string;
+  userMongoId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -19,6 +20,13 @@ const patientSchema = new mongoose.Schema<IPatient>(
     patientId: {
       type: String,
       default: () => new mongoose.Types.ObjectId().toString(),
+      unique: true,
+    },
+    userMongoId: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true,
       unique: true,
     },
     firstName: {

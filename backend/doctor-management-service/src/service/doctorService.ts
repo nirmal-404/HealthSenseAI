@@ -11,6 +11,10 @@ type RegisterDoctorInput = {
   lastName: string;
   email: string;
   phoneNumber: string;
+  dateOfBirth: Date;
+  gender: "male" | "female" | "other";
+  address?: string;
+  password: string;
   specialization: string;
   qualification?: string[];
   licenseNumber: string;
@@ -106,6 +110,8 @@ const generateUpcomingSlots = async (doctorId: string, availability: Availabilit
 };
 
 export const registerDoctorService = async (payload: RegisterDoctorInput) => {
+  const { password, dateOfBirth, gender, address, ...doctorProfilePayload } = payload;
+
   const existingDoctor = await Doctor.findOne({
     $or: [{ email: payload.email.toLowerCase() }, { licenseNumber: payload.licenseNumber }],
   });
@@ -114,9 +120,33 @@ export const registerDoctorService = async (payload: RegisterDoctorInput) => {
     throw new ApiError(httpStatus.CONFLICT, "Doctor with given email or license number already exists");
   }
 
+  const userRegistrationUrl = `${CONFIG.API_GATEWAY_URL}/api/auth/register`;
+  const userServicePayload = {
+    firstName: doctorProfilePayload.firstName,
+    lastName: doctorProfilePayload.lastName,
+    email: doctorProfilePayload.email,
+    phoneNumber: doctorProfilePayload.phoneNumber,
+    dateOfBirth,
+    gender,
+    address: address || "",
+    password,
+    role: "doctor",
+  };
+
+  const userServiceResponse = await axios.post(userRegistrationUrl, userServicePayload);
+  const userMongoId = userServiceResponse.data?.data?.id;
+
+  if (!userMongoId) {
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      "User service response did not include canonical user id"
+    );
+  }
+
   const doctor = await Doctor.create({
-    ...payload,
-    email: payload.email.toLowerCase(),
+    ...doctorProfilePayload,
+    email: doctorProfilePayload.email.toLowerCase(),
+    userMongoId,
     isVerified: false,
     rating: 0,
   });

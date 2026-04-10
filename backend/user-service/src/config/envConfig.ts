@@ -1,4 +1,13 @@
 import { SignOptions } from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const ENV = process.env.ENV || "local";
+
+if (ENV === "local") {
+  dotenv.config({ path: `.env.${ENV}`, override: true });
+}
 
 type ConfigType = {
   PORT: number;
@@ -7,6 +16,7 @@ type ConfigType = {
   JWT_EXPIRES_IN: SignOptions["expiresIn"];
   JWT_REFRESH_EXPIRES_IN: SignOptions["expiresIn"];
   SESSION_EXPIRES_DAYS: number;
+  INTERNAL_SERVICE_KEY: string;
   MONGO_URI: string;
   EMAIL_USER: string;
   EMAIL_PASS: string;
@@ -25,7 +35,7 @@ type ConfigType = {
 };
 
 export const CONFIG: ConfigType = {
-  PORT: Number(process.env.PORT) || 5009,
+  PORT: Number(process.env.PORT) || 50009,
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "defaultrefreshsecret",
   JWT_EXPIRES_IN:
@@ -34,6 +44,8 @@ export const CONFIG: ConfigType = {
     (process.env.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"]) || "7d",
   SESSION_EXPIRES_DAYS:
     Number(process.env.SESSION_EXPIRES_DAYS) || 7,
+  INTERNAL_SERVICE_KEY:
+    process.env.INTERNAL_SERVICE_KEY || "internal-dev-key",
   MONGO_URI:
     process.env.MONGO_URI || "mongodb://localhost:27017/healthsenseai",
   EMAIL_USER:
@@ -42,7 +54,7 @@ export const CONFIG: ConfigType = {
     process.env.EMAIL_PASS || "",
   CLIENT_URL:
     process.env.CLIENT_URL || "http://localhost:50000/api/auth",
-  ENV: process.env.NODE_ENV || "development",
+  ENV: process.env.ENV || process.env.NODE_ENV || "development",
 
   ADMIN_MANAGEMENT_SERVICE_URL:
     process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",

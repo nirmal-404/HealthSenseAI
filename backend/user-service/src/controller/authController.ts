@@ -1,11 +1,13 @@
 import { Response } from "express";
 import {
   forgotPasswordService,
+  getInternalUserByIdService,
   loginService,
   logoutService,
   refreshTokenService,
   registerService,
   resetPasswordService,
+  updateInternalUserStatusService,
   verifyEmailService,
 
 } from "../service/authService";
@@ -140,5 +142,33 @@ export const verifyEmailController = catchAsync(async (req: XRequest, res: Respo
   const response: XResponse = {
     message: "Email verified successfully.",
   };
+  res.status(httpStatus.OK).send(response);
+});
+
+export const getInternalUserByIdController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await getInternalUserByIdService(String(req.params.id));
+
+  const response: XResponse = {
+    message: "User fetched successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const updateInternalUserStatusController = catchAsync(async (req: XRequest, res: Response) => {
+  const status = req.body?.status;
+
+  if (status !== "active" && status !== "suspended") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Status must be active or suspended");
+  }
+
+  const result = await updateInternalUserStatusService(String(req.params.id), status);
+
+  const response: XResponse = {
+    message: "User status updated successfully",
+    data: result,
+  };
+
   res.status(httpStatus.OK).send(response);
 });

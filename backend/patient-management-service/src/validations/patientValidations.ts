@@ -9,6 +9,7 @@ export const registerPatientValidation = {
     dateOfBirth: Joi.date().required(),
     gender: Joi.string().valid("male", "female", "other").required(),
     address: Joi.string().allow(""),
+    password: Joi.string().min(8).required(),
     bloodGroup: Joi.string().allow(""),
     allergies: Joi.array().items(Joi.string()).default([]),
     emergencyContact: Joi.string().allow(""),

@@ -42,7 +42,13 @@ export const registerService = async (registerUserDTO: RegisterUserDTO) => {
       html: `<p>Click <a href="${verifyUrl}">here</a> to verify your email. Link expires in 24 hours.</p>`,
     });
 
-    return { userId: user.userId, email: user.email, role: user.role };
+    return {
+      id: user._id.toString(),
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    };
   } catch (error) {
     console.error(error);
     if (error instanceof ApiError) throw error;
@@ -79,7 +85,13 @@ export const loginService = async ({ email, password, ipAddress, userAgent }: { 
     return {
       accessToken,
       refreshToken,
-      user: { userId: user.userId, email: user.email, role: user.role },
+      user: {
+        id: user._id.toString(),
+        userId: user.userId,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     };
   } catch (error) {
     console.error(error);
@@ -222,5 +234,67 @@ export const validateTokenService = async (token: string) => {
     console.error(error);
     if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
+  }
+};
+
+export const getInternalUserByIdService = async (id: string) => {
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    return {
+      id: user._id.toString(),
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      address: user.address,
+    };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const updateInternalUserStatusService = async (
+  id: string,
+  status: "active" | "suspended"
+) => {
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    user.isActive = status === "active";
+    await user.save({ validateBeforeSave: false });
+
+    if (status === "suspended") {
+      await Session.updateMany({ userId: user._id }, { isRevoked: true });
+    }
+
+    return {
+      id: user._id.toString(),
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      status,
+    };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
   }
 };

@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IDoctor extends Document {
   doctorId: string;
+  userMongoId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -22,6 +23,13 @@ const doctorSchema = new mongoose.Schema<IDoctor>(
     doctorId: {
       type: String,
       default: () => new mongoose.Types.ObjectId().toString(),
+      unique: true,
+    },
+    userMongoId: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true,
       unique: true,
     },
     firstName: {

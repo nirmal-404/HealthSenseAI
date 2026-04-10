@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IAdmin extends Document {
   adminId: string;
+  userMongoId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -16,6 +17,13 @@ const adminSchema = new mongoose.Schema<IAdmin>(
     adminId: {
       type: String,
       default: () => new mongoose.Types.ObjectId().toString(),
+      unique: true,
+    },
+    userMongoId: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true,
       unique: true,
     },
     firstName: {
