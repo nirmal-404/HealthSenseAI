@@ -1,4 +1,13 @@
 import { SignOptions } from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const ENV = process.env.ENV || "local";
+
+if (ENV === "local") {
+  dotenv.config({ path: `.env.${ENV}`, override: true });
+}
 
 type ConfigType = {
   PORT: number;
@@ -25,7 +34,7 @@ type ConfigType = {
 };
 
 export const CONFIG: ConfigType = {
-  PORT: Number(process.env.PORT) || 5009,
+  PORT: Number(process.env.PORT) || 50009,
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "defaultrefreshsecret",
   JWT_EXPIRES_IN:
@@ -42,7 +51,7 @@ export const CONFIG: ConfigType = {
     process.env.EMAIL_PASS || "",
   CLIENT_URL:
     process.env.CLIENT_URL || "http://localhost:50000/api/auth",
-  ENV: process.env.NODE_ENV || "development",
+  ENV: process.env.ENV || process.env.NODE_ENV || "development",
 
   ADMIN_MANAGEMENT_SERVICE_URL:
     process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",
