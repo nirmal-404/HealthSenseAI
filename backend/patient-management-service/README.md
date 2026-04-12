@@ -65,3 +65,7 @@ POST /api/patients/{id}/documents
 GET /api/patients/{id}/medical-history
 GET /api/patients/{id}/prescriptions
 GET /api/patients/{id}/dashboard
+
+Internal Endpoints:
+
+GET /internal/patients/{id}/identity

@@ -58,3 +58,28 @@ export const byDoctorValidation = {
     date: Joi.date(),
   }),
 };
+
+export const internalAppointmentPaymentContextValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
+  }),
+};
+
+export const internalAppointmentPaymentStatusValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
+  }),
+  body: Joi.object().keys({
+    paymentStatus: Joi.string().valid("pending", "paid", "failed", "refunded").required(),
+    notes: Joi.string().allow(""),
+  }),
+};
+
+export const confirmAppointmentPaymentValidation = {
+  body: Joi.object().keys({
+    appointmentId: Joi.string().required(),
+    paymentId: Joi.string().required(),
+    status: Joi.string().valid("pending", "success", "failed", "refunded").required(),
+    notes: Joi.string().allow(""),
+  }),
+};

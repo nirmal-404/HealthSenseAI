@@ -278,3 +278,21 @@ export const getDoctorAppointmentsService = async (doctorId: string) => {
     return [];
   }
 };
+
+export const getInternalDoctorBillingService = async (doctorId: string) => {
+  const doctor = await Doctor.findOne({ doctorId }).select(
+    "doctorId userMongoId consultationFee firstName lastName"
+  );
+
+  if (!doctor) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Doctor not found");
+  }
+
+  return {
+    doctorId: doctor.doctorId,
+    userMongoId: doctor.userMongoId || "",
+    consultationFee: doctor.consultationFee,
+    firstName: doctor.firstName,
+    lastName: doctor.lastName,
+  };
+};

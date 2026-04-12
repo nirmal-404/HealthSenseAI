@@ -93,3 +93,9 @@ export const doctorAppointmentsValidation = {
     id: Joi.string().required(),
   }),
 };
+
+export const internalDoctorBillingValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
+  }),
+};

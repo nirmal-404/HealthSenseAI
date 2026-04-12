@@ -18,6 +18,18 @@ type AppointmentQueryFilter = {
   date?: Date;
 };
 
+type UpdateAppointmentPaymentStatusInput = {
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  notes?: string;
+};
+
+type ConfirmAppointmentPaymentInput = {
+  appointmentId: string;
+  paymentId: string;
+  status: "pending" | "success" | "failed" | "refunded";
+  notes?: string;
+};
+
 const pushHistory = async (
   appointmentId: string,
   statusChange: string,
@@ -201,4 +213,90 @@ export const getAppointmentStatusService = async (appointmentId: string) => {
     status: appointment.status,
     updatedAt: (appointment as any).updatedAt,
   };
+};
+
+export const getInternalAppointmentPaymentContextService = async (appointmentId: string) => {
+  const appointment = await Appointment.findOne({ appointmentId }).select(
+    "appointmentId patientId doctorId appointmentDate status paymentStatus"
+  );
+
+  if (!appointment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Appointment not found");
+  }
+
+  return {
+    appointmentId: appointment.appointmentId,
+    patientId: appointment.patientId,
+    doctorId: appointment.doctorId,
+    appointmentDate: appointment.appointmentDate,
+    status: appointment.status,
+    paymentStatus: appointment.paymentStatus,
+  };
+};
+
+export const updateInternalAppointmentPaymentStatusService = async (
+  appointmentId: string,
+  payload: UpdateAppointmentPaymentStatusInput,
+  changedBy: string
+) => {
+  const appointment = await Appointment.findOne({ appointmentId });
+
+  if (!appointment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Appointment not found");
+  }
+
+  if (appointment.paymentStatus === payload.paymentStatus) {
+    return appointment;
+  }
+
+  appointment.paymentStatus = payload.paymentStatus;
+  await appointment.save();
+
+  await pushHistory(
+    appointment.appointmentId,
+    `payment:${payload.paymentStatus}`,
+    changedBy,
+    payload.notes || `Payment status updated to ${payload.paymentStatus}`
+  );
+
+  return appointment;
+};
+
+const mapConfirmStatusToPaymentStatus = (
+  status: ConfirmAppointmentPaymentInput["status"]
+): "pending" | "paid" | "failed" | "refunded" => {
+  if (status === "success") {
+    return "paid";
+  }
+
+  if (status === "failed" || status === "refunded" || status === "pending") {
+    return status;
+  }
+
+  return "pending";
+};
+
+export const confirmAppointmentPaymentService = async (
+  payload: ConfirmAppointmentPaymentInput,
+  changedBy: string
+) => {
+  const appointment = await Appointment.findOne({ appointmentId: payload.appointmentId });
+
+  if (!appointment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Appointment not found");
+  }
+
+  const mappedPaymentStatus = mapConfirmStatusToPaymentStatus(payload.status);
+
+  appointment.paymentStatus = mappedPaymentStatus;
+  await appointment.save();
+
+  await pushHistory(
+    appointment.appointmentId,
+    `payment:${mappedPaymentStatus}`,
+    changedBy,
+    payload.notes || `Payment ${payload.paymentId} status updated to ${payload.status}`
+  );
+
+  return appointment;
 };

@@ -2,15 +2,19 @@ import { Router } from "express";
 import {
   bookAppointmentController,
   cancelAppointmentController,
+  confirmAppointmentPaymentController,
   confirmAppointmentController,
   getAppointmentController,
+  getInternalAppointmentPaymentContextController,
   getAppointmentsByDoctorController,
   getAppointmentsByPatientController,
   getAppointmentStatusController,
   rejectAppointmentController,
   rescheduleAppointmentController,
+  updateInternalAppointmentPaymentStatusController,
 } from "../controller/appointmentController";
 import { allowRoles } from "../middlewares/allowRoles";
+import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
 import {
@@ -18,11 +22,42 @@ import {
   bookAppointmentValidation,
   byDoctorValidation,
   byPatientValidation,
+  confirmAppointmentPaymentValidation,
   decisionValidation,
+  internalAppointmentPaymentContextValidation,
+  internalAppointmentPaymentStatusValidation,
   rescheduleAppointmentValidation,
 } from "../validations/appointmentValidations";
 
 const router = Router();
+
+router.get(
+  "/internal/appointments/:id/payment-context",
+  requireInternalServiceKey,
+  validate(internalAppointmentPaymentContextValidation),
+  getInternalAppointmentPaymentContextController
+);
+
+router.get(
+  "/appointments/:id",
+  requireInternalServiceKey,
+  validate(appointmentIdValidation),
+  getAppointmentController
+);
+
+router.post(
+  "/appointments/confirm-payment",
+  requireInternalServiceKey,
+  validate(confirmAppointmentPaymentValidation),
+  confirmAppointmentPaymentController
+);
+
+router.put(
+  "/internal/appointments/:id/payment-status",
+  requireInternalServiceKey,
+  validate(internalAppointmentPaymentStatusValidation),
+  updateInternalAppointmentPaymentStatusController
+);
 
 router.post(
   "/book",

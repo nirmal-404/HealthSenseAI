@@ -6,13 +6,15 @@ Payment
 
 paymentId (UUID)
 appointmentId (FK)
+userId (FK)
 patientId (FK)
 doctorId (FK)
 amount
 currency (LKR/USD)
 paymentMethod (PayHere, Stripe, etc.)
+stripePaymentIntentId
 transactionId (from payment gateway)
-status (pending, completed, failed, refunded)
+status (pending, success, completed, failed, refunded)
 initiatedAt
 completedAt
 
@@ -43,21 +45,20 @@ processedAt
 
 Functionalities:
 
-Initialize payment for appointments
-Process payments via third-party gateways
-Handle payment callbacks/webhooks
+Process appointment payments after doctor confirmation
+Compute amount from doctor consultation fee at payment time
+Update appointment payment status after payment/refund
 Verify payment status
-Generate invoices
-Process refunds (for cancelled appointments)
+Process refunds
 Payment history tracking
 Generate payment reports
 
 API Endpoints:
 
-POST /api/payments/initialize
-POST /api/payments/verify
+POST /api/payments/create
+GET /api/payments/{id}
 POST /api/payments/webhook
+POST /api/payments/appointments/{appointmentId}/process
 GET /api/payments/{paymentId}/status
 POST /api/payments/{paymentId}/refund
-GET /api/payments/invoice/{invoiceId}
 GET /api/payments/patient/{patientId}/history

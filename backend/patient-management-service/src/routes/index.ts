@@ -2,22 +2,32 @@ import { Router } from "express";
 import {
   createPatientProfileController,
   getPatientDashboardController,
+  getInternalPatientIdentityController,
   getPatientMedicalHistoryController,
   getPatientPrescriptionsController,
   updatePatientProfileController,
   uploadPatientDocumentController,
 } from "../controller/patientController";
 import { allowRoles } from "../middlewares/allowRoles";
+import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
 import {
   createPatientProfileValidation,
+  internalPatientIdentityValidation,
   patientIdValidation,
   updatePatientValidation,
   uploadDocumentValidation,
 } from "../validations/patientValidations";
 
 const router = Router();
+
+router.get(
+  "/internal/patients/:id/identity",
+  requireInternalServiceKey,
+  validate(internalPatientIdentityValidation),
+  getInternalPatientIdentityController
+);
 
 router.post(
   "/profile",
