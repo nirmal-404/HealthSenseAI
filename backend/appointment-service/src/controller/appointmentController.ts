@@ -3,13 +3,16 @@ import httpStatus from "http-status";
 import {
   bookAppointmentService,
   cancelAppointmentService,
+  confirmAppointmentPaymentService,
   confirmAppointmentService,
   getAppointmentService,
+  getInternalAppointmentPaymentContextService,
   getAppointmentsByDoctorService,
   getAppointmentsByPatientService,
   getAppointmentStatusService,
   rejectAppointmentService,
   rescheduleAppointmentService,
+  updateInternalAppointmentPaymentStatusService,
 } from "../service/appointmentService";
 import { catchAsync } from "../utils/catchAsync";
 import { XRequest } from "../types/XRequest";
@@ -131,3 +134,49 @@ export const getAppointmentStatusController = catchAsync(async (req: XRequest, r
 
   res.status(httpStatus.OK).send(response);
 });
+
+export const getInternalAppointmentPaymentContextController = catchAsync(
+  async (req: XRequest, res: Response) => {
+    const result = await getInternalAppointmentPaymentContextService(String(req.params.id));
+
+    const response: XResponse = {
+      message: "Appointment payment context fetched successfully",
+      data: result,
+    };
+
+    res.status(httpStatus.OK).send(response);
+  }
+);
+
+export const updateInternalAppointmentPaymentStatusController = catchAsync(
+  async (req: XRequest, res: Response) => {
+    const result = await updateInternalAppointmentPaymentStatusService(
+      String(req.params.id),
+      req.body,
+      req.user?.id || "payment-service"
+    );
+
+    const response: XResponse = {
+      message: "Appointment payment status updated successfully",
+      data: result,
+    };
+
+    res.status(httpStatus.OK).send(response);
+  }
+);
+
+export const confirmAppointmentPaymentController = catchAsync(
+  async (req: XRequest, res: Response) => {
+    const result = await confirmAppointmentPaymentService(
+      req.body,
+      req.user?.id || "payment-service"
+    );
+
+    const response: XResponse = {
+      message: "Appointment payment confirmed successfully",
+      data: result,
+    };
+
+    res.status(httpStatus.OK).send(response);
+  }
+);

@@ -40,3 +40,9 @@ export const uploadDocumentValidation = {
     description: Joi.string().allow(""),
   }),
 };
+
+export const internalPatientIdentityValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
+  }),
+};

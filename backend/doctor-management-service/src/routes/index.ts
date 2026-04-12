@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   blockTimeSlotController,
   getDoctorAppointmentsController,
+  getInternalDoctorBillingController,
   getTimeSlotsController,
   registerDoctorController,
   searchDoctorController,
@@ -9,12 +10,14 @@ import {
   updateDoctorProfileController,
 } from "../controller/doctorController";
 import { allowRoles } from "../middlewares/allowRoles";
+import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
 import { validate } from "../middlewares/validate";
 import {
   blockTimeSlotValidation,
   doctorAppointmentsValidation,
   getTimeSlotsValidation,
+  internalDoctorBillingValidation,
   registerDoctorValidation,
   searchDoctorValidation,
   setAvailabilityValidation,
@@ -22,6 +25,13 @@ import {
 } from "../validations/doctorValidations";
 
 const router = Router();
+
+router.get(
+  "/internal/doctors/:id/billing",
+  requireInternalServiceKey,
+  validate(internalDoctorBillingValidation),
+  getInternalDoctorBillingController
+);
 
 router.post(
   "/register",

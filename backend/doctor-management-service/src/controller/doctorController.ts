@@ -4,6 +4,7 @@ import Doctor from "../models/Doctor";
 import {
   blockTimeSlotService,
   getDoctorAppointmentsService,
+  getInternalDoctorBillingService,
   getTimeSlotsService,
   registerDoctorService,
   searchDoctorsService,
@@ -124,6 +125,17 @@ export const getDoctorAppointmentsController = catchAsync(async (req: XRequest, 
 
   const response: XResponse = {
     message: "Doctor appointments fetched successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const getInternalDoctorBillingController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await getInternalDoctorBillingService(String(req.params.id));
+
+  const response: XResponse = {
+    message: "Doctor billing details fetched successfully",
     data: result,
   };
 

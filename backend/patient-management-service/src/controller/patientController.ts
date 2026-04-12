@@ -4,6 +4,7 @@ import Patient from "../models/Patient";
 import {
   createPatientProfileService,
   getPatientDashboardService,
+  getInternalPatientIdentityService,
   getPatientMedicalHistoryService,
   getPatientPrescriptionsService,
   updatePatientProfileService,
@@ -118,3 +119,16 @@ export const getPatientDashboardController = catchAsync(async (req: XRequest, re
 
   res.status(httpStatus.OK).send(response);
 });
+
+export const getInternalPatientIdentityController = catchAsync(
+  async (req: XRequest, res: Response) => {
+    const result = await getInternalPatientIdentityService(String(req.params.id));
+
+    const response: XResponse = {
+      message: "Patient identity fetched successfully",
+      data: result,
+    };
+
+    res.status(httpStatus.OK).send(response);
+  }
+);
