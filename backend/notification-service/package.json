@@ -1,7 +1,7 @@
 {
-  "name": "telemedicine",
+  "name": "notification-service",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node src/index.ts",
@@ -9,17 +9,39 @@
     "start": "node dist/index.js",
     "clean": "rimraf dist"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "notification",
+    "email",
+    "sms",
+    "messaging"
+  ],
+  "author": "HealthSense Team",
   "license": "ISC",
-  "description": "Authentication & Authorization Service\r Responsibilities: Handle user authentication and role-based access control.\r Models:",
+  "description": "Notification Service - Handles email and SMS notifications for appointments, payments, and reminders",
   "dependencies": {
     "@types/express": "^5.0.6",
+    "@types/node": "^20.10.6",
+    "axios": "^1.6.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "inversify": "^6.0.1",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.0.3",
+    "nodemailer": "^6.10.1",
+    "reflect-metadata": "^0.2.2",
+    "twilio": "^4.0.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2"
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.10.6",
+    "@types/nodemailer": "^8.0.0",
+    "@types/uuid": "^9.0.7",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }

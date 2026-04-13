@@ -5,14 +5,14 @@ export const CONFIG = {
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
 
   // MongoDB Configuration
-  MONGODB_URI: process.env.MONGODB_URI || "mongodb://mongo:27017/notification-service",
+  MONGO_URI: process.env.MONGO_URI || "mongodb://mongo:27017/notification-service",
 
   // Email Configuration (Nodemailer)
   EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
-  EMAIL_PORT: parseInt(process.env.EMAIL_PORT || "587"),
-  EMAIL_SECURE: process.env.EMAIL_SECURE === "true" || false,
+  EMAIL_PORT: parseInt(process.env.EMAIL_PORT || "465"),
+  EMAIL_SECURE: process.env.EMAIL_SECURE === "true" || true,
   EMAIL_USER: process.env.EMAIL_USER || "your-email@gmail.com",
-  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || "your-app-password",
+  EMAIL_PASSWORD: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || "your-app-password",
   EMAIL_FROM: process.env.EMAIL_FROM || "HealthSense <noreply@healthsense.com>",
 
   // SMS Configuration (Twilio)
