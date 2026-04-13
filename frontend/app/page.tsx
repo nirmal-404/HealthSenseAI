@@ -1,4 +1,3 @@
-import Navbar from '@/components/common/navbar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { HeartPulse, ShieldCheck, Zap, Activity } from 'lucide-react';
@@ -6,7 +5,7 @@ import { HeartPulse, ShieldCheck, Zap, Activity } from 'lucide-react';
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar />
+      
       
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-20 pb-32 md:pt-32 md:pb-48">

@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { error } from 'node:console';
 
 interface User {
   id: string;
@@ -63,10 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       toast.success('Sign in successful!');
       
-      // Redirect based on role
-      if (user.role === 'admin') router.push('/admin/dashboard');
-      else if (user.role === 'doctor') router.push('/doctor/dashboard');
-      else router.push('/dashboard');
+      // Redirect to home page
+      router.push('/');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to sign in');
       throw err;
