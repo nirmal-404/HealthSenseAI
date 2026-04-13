@@ -78,3 +78,13 @@ export const answerFollowUpQuestionsService = async (input: {
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
     }
 }
+
+export const getUserHistoryService = async (patientId: string) => {
+    try {
+        const history = await SymptomCheck.find({ patientId }).sort({ createdAt: -1 });
+        return history;
+    } catch (error: any) {
+        console.error(error);
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
+    }
+}

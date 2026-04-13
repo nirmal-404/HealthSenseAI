@@ -44,7 +44,6 @@ export const registerService = async (registerUserDTO: RegisterUserDTO) => {
 
     return {
       id: user._id.toString(),
-      userId: user.userId,
       email: user.email,
       role: user.role,
       isActive: user.isActive,
@@ -87,7 +86,6 @@ export const loginService = async ({ email, password, ipAddress, userAgent }: { 
       refreshToken,
       user: {
         id: user._id.toString(),
-        userId: user.userId,
         email: user.email,
         role: user.role,
         isActive: user.isActive,
@@ -247,7 +245,6 @@ export const getInternalUserByIdService = async (id: string) => {
 
     return {
       id: user._id.toString(),
-      userId: user.userId,
       email: user.email,
       role: user.role,
       isActive: user.isActive,
@@ -259,6 +256,42 @@ export const getInternalUserByIdService = async (id: string) => {
       gender: user.gender,
       address: user.address,
     };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const changePasswordService = async (userId: string, currentPassword: string, newPassword: string) => {
+  try {
+    const user = await User.findById(userId).select("+passwordHash");
+    if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+    if (!(await user.comparePassword(currentPassword))) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Current password is incorrect");
+    }
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    await Session.updateMany({ userId: user._id }, { isRevoked: true });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const deleteAccountService = async (userId: string) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+    user.isActive = false;
+    await user.save({ validateBeforeSave: false });
+
+    await Session.updateMany({ userId: user._id }, { isRevoked: true });
   } catch (error) {
     console.error(error);
     if (error instanceof ApiError) throw error;
@@ -286,7 +319,6 @@ export const updateInternalUserStatusService = async (
 
     return {
       id: user._id.toString(),
-      userId: user.userId,
       email: user.email,
       role: user.role,
       isActive: user.isActive,
