@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, X, MessageSquare, Loader2, Activity, AlertTriangle, CheckCircle2, Info, ChevronDown } from 'lucide-react';
+import { Bot, Send, X, MessageSquare, Loader2, Activity, AlertTriangle, CheckCircle2, Info, ChevronDown, History, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -18,29 +18,67 @@ interface Message {
   data?: any;
 }
 
+const initialBotMessage: Message = {
+  id: '1',
+  role: 'bot',
+  content: "Hello! I'm your HealthSense AI assistant. Describe your symptoms (e.g., 'I have a headache since 2 days'), and I'll help analyze them.",
+};
+
 export default function HealthSenseBot() {
   const { user, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'bot',
-      content: "Hello! I'm your HealthSense AI assistant. Describe your symptoms (e.g., 'I have a headache since 2 days'), and I'll help analyze them.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    setMessages([initialBotMessage]);
+  }, []);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentCheckId, setCurrentCheckId] = useState<string | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [view, setView] = useState<'chat' | 'history'>('chat');
+  const [history, setHistory] = useState<any[]>([]);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [isViewingHistoryItem, setIsViewingHistoryItem] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
+
+
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && view === 'chat') {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, view]);
+
+  useEffect(() => {
+    if (isOpen && view === 'history') {
+      loadHistory();
+    }
+  }, [isOpen, view]);
+
+  const loadHistory = async () => {
+    setIsFetchingHistory(true);
+    try {
+      const response = await api.get('/ai/history');
+      setHistory(response.data.data);
+    } catch (err) {
+      toast.error('Failed to load history.');
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  const resetChat = () => {
+    setMessages([initialBotMessage]);
+    setInputValue('');
+    setCurrentCheckId(null);
+    setFollowUpQuestions([]);
+    setAnswers({});
+    setIsViewingHistoryItem(false);
+    setView('chat');
+  };
 
   if (!isAuthenticated) return null;
 
@@ -167,89 +205,149 @@ export default function HealthSenseBot() {
                 <CardDescription className="text-[10px] text-teal-100 uppercase tracking-widest font-semibold">AI Symptom Checker</CardDescription>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-white" onClick={() => setIsOpen(false)}>
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn("h-8 w-8 hover:bg-white/10 text-white", view === 'history' && "bg-white/20")}
+                onClick={() => setView(view === 'chat' ? 'history' : 'chat')}
+              >
+                {view === 'chat' ? <History className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-white" onClick={() => setIsOpen(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </CardHeader>
           
           <CardContent ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className={cn("flex flex-col", msg.role === 'user' ? "items-end" : "items-start")}>
-                <div className={cn(
-                  "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
-                  msg.role === 'user' 
-                    ? "bg-teal-600 text-white rounded-tr-none" 
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none"
-                )}>
-                  {msg.content}
-                </div>
+            {view === 'chat' ? (
+              messages.map((msg) => (
+                <div key={msg.id} className={cn("flex flex-col", msg.role === 'user' ? "items-end" : "items-start")}>
+                  {/* ... existing message rendering ... */}
+                  <div className={cn(
+                    "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
+                    msg.role === 'user' 
+                      ? "bg-teal-600 text-white rounded-tr-none" 
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
 
-                {msg.type === 'follow-up' && (
-                  <form onSubmit={handleFollowUpSubmit} className="mt-4 w-full bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                    {msg.data.map((q: string, i: number) => (
-                      <div key={i} className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">{q}</label>
-                        <Input 
-                          placeholder="Your answer..." 
-                          className="bg-white dark:bg-slate-950" 
-                          onChange={(e) => setAnswers(prev => ({ ...prev, [q]: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    ))}
-                    <Button type="submit" size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white">
-                      Submit Answers
-                    </Button>
-                  </form>
-                )}
-
-                {msg.type === 'feedback' && (
-                  <div className="mt-4 w-full space-y-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-teal-100 dark:border-teal-900/30 shadow-sm animate-in zoom-in-95 duration-500">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-teal-600" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnosis</span>
-                      </div>
-                      <span className={cn("text-[10px] uppercase font-bold px-2 py-0.5 rounded-full", getUrgencyColor(msg.data.urgencyLevel))}>
-                        {msg.data.urgencyLevel} Urgency
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <div className="mt-1">
-                          {msg.data.overallSeverity === 'severe' ? <AlertTriangle className="w-4 h-4 text-red-500" /> : <CheckCircle2 className="w-4 h-4 text-teal-500" />}
+                  {msg.type === 'follow-up' && (
+                    <form onSubmit={handleFollowUpSubmit} className="mt-4 w-full bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+                      {msg.data.map((q: string, i: number) => (
+                        <div key={i} className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500">{q}</label>
+                          <Input 
+                            placeholder="Your answer..." 
+                            className="bg-white dark:bg-slate-950" 
+                            onChange={(e) => setAnswers(prev => ({ ...prev, [q]: e.target.value }))}
+                            required
+                          />
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold">Overall Severity: <span className="capitalize">{msg.data.overallSeverity}</span></p>
+                      ))}
+                      <Button type="submit" size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                        Submit Answers
+                      </Button>
+                    </form>
+                  )}
+
+                  {msg.type === 'feedback' && (
+                    <div className="mt-4 w-full space-y-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-teal-100 dark:border-teal-900/30 shadow-sm animate-in zoom-in-95 duration-500">
+                      {/* ... existing feedback component ... */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-teal-600" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnosis</span>
                         </div>
+                        <span className={cn("text-[10px] uppercase font-bold px-2 py-0.5 rounded-full", getUrgencyColor(msg.data.urgencyLevel))}>
+                          {msg.data.urgencyLevel} Urgency
+                        </span>
                       </div>
 
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg text-xs leading-relaxed italic text-slate-600 dark:text-slate-400">
-                        "{msg.data.aiSuggestions}"
-                      </div>
-
-                      {msg.data.recommendedSpecialties?.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">Recommended Specialists</p>
-                          <div className="flex flex-wrap gap-1">
-                            {msg.data.recommendedSpecialties.map((s: string, i: number) => (
-                              <span key={i} className="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md">{s}</span>
-                            ))}
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-1">
+                            {msg.data.overallSeverity === 'severe' ? <AlertTriangle className="w-4 h-4 text-red-500" /> : <CheckCircle2 className="w-4 h-4 text-teal-500" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">Overall Severity: <span className="capitalize">{msg.data.overallSeverity}</span></p>
                           </div>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-2">
-                      <Info className="w-3 h-3" />
-                      <span>This is an AI assessment, not a formal diagnosis.</span>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg text-xs leading-relaxed italic text-slate-600 dark:text-slate-400">
+                          "{msg.data.aiSuggestions}"
+                        </div>
+
+                        {msg.data.recommendedSpecialties?.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Recommended Specialists</p>
+                            <div className="flex flex-wrap gap-1">
+                              {msg.data.recommendedSpecialties.map((s: string, i: number) => (
+                                <span key={i} className="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md">{s}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-2">
+                        <Info className="w-3 h-3" />
+                        <span>This is an AI assessment, not a formal diagnosis.</span>
+                      </div>
                     </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Previous Assessments</h3>
+                  <Button variant="ghost" size="sm" className="h-7 text-[10px] text-teal-600" onClick={() => setView('chat')}>
+                    <Plus className="w-3 h-3 mr-1" /> New Assessment
+                  </Button>
+                </div>
+                
+                {isFetchingHistory ? (
+                  <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                    <p className="text-xs text-slate-400">Loading your history...</p>
                   </div>
+                ) : history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 space-y-3 text-center">
+                    <Info className="w-8 h-8 text-slate-200" />
+                    <p className="text-xs text-slate-500">No assessments yet. <br/> Start a new chat to get analyzed!</p>
+                  </div>
+                ) : (
+                  history.map((item) => (
+                    <Card key={item._id} className="p-4 border-none bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => {
+                        setMessages([
+                          { id: Date.now().toString(), role: 'bot', content: `Re-evaluating assessment from ${new Date(item.createdAt).toLocaleDateString()}:`, type: 'feedback', data: item }
+                        ]);
+                        setIsViewingHistoryItem(true);
+                        setView('chat');
+                    }}>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">{new Date(item.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs font-semibold line-clamp-1">"{item.rawInput}"</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                             {item.symptoms.slice(0, 2).map((s:any, idx:number) => (
+                               <span key={idx} className="text-[9px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-700">{s.name}</span>
+                             ))}
+                          </div>
+                        </div>
+                        <span className={cn("text-[8px] uppercase font-black px-1.5 py-0.5 rounded-full", getUrgencyColor(item.urgencyLevel))}>
+                          {item.urgencyLevel}
+                        </span>
+                      </div>
+                    </Card>
+                  ))
                 )}
               </div>
-            ))}
-            {isLoading && (
+            )}
+            {isLoading && view === 'chat' && (
               <div className="flex justify-start">
                 <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none animate-pulse">
                   <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
@@ -258,26 +356,37 @@ export default function HealthSenseBot() {
             )}
           </CardContent>
 
-          <CardFooter className="p-4 pt-0">
-            <div className="w-full relative">
-              <Input
-                placeholder="Type your symptoms..."
-                className="pr-12 py-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none focus-visible:ring-teal-600 shadow-inner"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                disabled={isLoading || followUpQuestions.length > 0}
-              />
-              <Button 
-                size="icon" 
-                className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl bg-teal-600 hover:bg-teal-500 text-white shadow-lg"
-                onClick={handleSend}
-                disabled={isLoading || !inputValue.trim() || followUpQuestions.length > 0}
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardFooter>
+          {view === 'chat' && (
+            <CardFooter className="p-4 pt-0">
+              {isViewingHistoryItem ? (
+                <Button 
+                   onClick={resetChat} 
+                   className="w-full bg-teal-600 hover:bg-teal-700 text-white py-6 rounded-2xl gap-2 font-bold"
+                >
+                  <Plus className="w-5 h-5" /> Start New Consultation
+                </Button>
+              ) : (
+                <div className="w-full relative">
+                  <Input
+                    placeholder="Type your symptoms..."
+                    className="pr-12 py-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none focus-visible:ring-teal-600 shadow-inner"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    disabled={isLoading || followUpQuestions.length > 0}
+                  />
+                  <Button 
+                    size="icon" 
+                    className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-lg"
+                    onClick={handleSend}
+                    disabled={isLoading || !inputValue.trim() || followUpQuestions.length > 0}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </CardFooter>
+          )}
         </Card>
       )}
 

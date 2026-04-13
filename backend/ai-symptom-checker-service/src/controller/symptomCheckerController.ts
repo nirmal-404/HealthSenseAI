@@ -1,12 +1,11 @@
 import { Response } from "express";
-import { answerFollowUpQuestionsService, checkSymptomsService } from "../service/symptomCheckerService";
+import { answerFollowUpQuestionsService, checkSymptomsService, getUserHistoryService } from "../service/symptomCheckerService";
 import { catchAsync } from "../utils/catchAsync";
 import { XResponse } from "../types/XResponse";
 import httpStatus from "http-status";
 import { XRequest } from "../types/XRequest";
 
 export const checkSymptomsController = catchAsync(async (req: XRequest, res: Response) => {
-
     const data = {
         rawInput: req.body.rawInput,
         additionalContext: req.body.additionalContext,
@@ -34,4 +33,13 @@ export const answerFollowUpQuestionsController = catchAsync(async (req: XRequest
         data: check,
     };
     return res.status(httpStatus.OK).json(response);
-})
+});
+
+export const getUserHistoryController = catchAsync(async (req: XRequest, res: Response) => {
+    const history = await getUserHistoryService(req.user.id);
+    const response: XResponse = {
+        message: 'History Fetched Successfully',
+        data: history,
+    };
+    res.status(httpStatus.OK).send(response);
+});
