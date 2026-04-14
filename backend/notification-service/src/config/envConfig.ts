@@ -20,6 +20,20 @@ export const CONFIG = {
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || "",
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || "+1234567890",
 
+  // RabbitMQ Configuration
+  RABBITMQ_URL: process.env.RABBITMQ_URL || "amqp://guest:guest@rabbitmq:5672",
+  RABBITMQ_CONNECTION_RETRY_DELAY: parseInt(process.env.RABBITMQ_CONNECTION_RETRY_DELAY || "5000"), // ms
+  RABBITMQ_CONNECTION_MAX_RETRIES: parseInt(process.env.RABBITMQ_CONNECTION_MAX_RETRIES || "10"),
+
+  // RabbitMQ Queue & Exchange Configuration
+  APPOINTMENT_EXCHANGE: process.env.APPOINTMENT_EXCHANGE || "appointments",
+  APPOINTMENT_QUEUE: process.env.APPOINTMENT_QUEUE || "appointment_notifications",
+  APPOINTMENT_ROUTING_KEY: process.env.APPOINTMENT_ROUTING_KEY || "appointment.booked",
+
+  CONSULTATION_EXCHANGE: process.env.CONSULTATION_EXCHANGE || "consultations",
+  CONSULTATION_QUEUE: process.env.CONSULTATION_QUEUE || "consultation_notifications",
+  CONSULTATION_ROUTING_KEY: process.env.CONSULTATION_ROUTING_KEY || "consultation.completed",
+
   // Service URLs
   ADMIN_MANAGEMENT_SERVICE_URL: process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",
   AI_SYMPTOM_CHECKER_SERVICE_URL: process.env.AI_SYMPTOM_CHECKER_SERVICE_URL || "http://localhost:5002",
