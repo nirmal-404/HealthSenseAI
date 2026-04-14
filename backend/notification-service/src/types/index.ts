@@ -105,6 +105,25 @@ export interface PrescriptionNotificationPayload {
   medications: string[];
 }
 
+export interface ConsultationCompletedPayload {
+  sessionId: string;
+  patientId: string;
+  doctorId: string;
+  consultationDate: string;
+  consultationTime: string;
+  duration: number;
+  status: "completed" | "cancelled";
+  patientName: string;
+  doctorName: string;
+  patientEmail: string;
+  patientPhone: string;
+  doctorEmail: string;
+  doctorPhone: string;
+  notes?: string;
+}
+
+export type EventHandler = (eventData: any) => Promise<void>;
+
 export interface EmailConfig {
   host: string;
   port: number;
