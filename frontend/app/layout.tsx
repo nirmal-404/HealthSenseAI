@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ToastProvider } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
