@@ -9,7 +9,8 @@ import {
   resetPasswordService,
   updateInternalUserStatusService,
   verifyEmailService,
-
+  changePasswordService,
+  deleteAccountService,
 } from "../service/authService";
 import { ApiError } from "../utils/ApiError"
 import { catchAsync } from "../utils/catchAsync";
@@ -170,5 +171,30 @@ export const updateInternalUserStatusController = catchAsync(async (req: XReques
     data: result,
   };
 
+  res.status(httpStatus.OK).send(response);
+});
+
+export const changePasswordController = catchAsync(async (req: XRequest, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  await changePasswordService(userId, currentPassword, newPassword);
+
+  const response: XResponse = {
+    message: "Password changed successfully",
+  };
+  res.status(httpStatus.OK).send(response);
+});
+
+export const deleteAccountController = catchAsync(async (req: XRequest, res: Response) => {
+  const userId = req.user.id;
+
+  await deleteAccountService(userId);
+
+  res.clearCookie("refreshToken");
+
+  const response: XResponse = {
+    message: "Account deleted successfully",
+  };
   res.status(httpStatus.OK).send(response);
 });
