@@ -277,70 +277,7 @@ class RabbitMQProducer {
   }
 
   /**
-   * Publish appointment rejected event (doctor rejected)
-   */
-  async publishAppointmentRejected(appointmentData: any): Promise<boolean> {
-    if (!this.isConnected || !this.channel) {
-      console.error("Producer: Channel not connected, cannot publish event");
-      return false;
-    }
-
-    try {
-      // Ensure all required fields are present
-      const payload = {
-        appointmentId: appointmentData.appointmentId,
-        patientId: appointmentData.patientId,
-        doctorId: appointmentData.doctorId,
-        appointmentDate: appointmentData.appointmentDate,
-        appointmentTime: appointmentData.appointmentTime,
-        doctorName: appointmentData.doctorName,
-        patientName: appointmentData.patientName,
-        patientEmail: appointmentData.patientEmail,
-        patientPhone: appointmentData.patientPhone,
-        doctorEmail: appointmentData.doctorEmail,
-        doctorPhone: appointmentData.doctorPhone,
-        status: appointmentData.status || "rejected",
-        rejectionReason: appointmentData.rejectionReason || appointmentData.notes,
-      };
-
-      const message = {
-        eventId: `appointment-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        eventType: "appointment.rejected",
-        data: payload,
-      };
-
-      const messageBuffer = Buffer.from(JSON.stringify(message));
-      const publishOptions = {
-        persistent: true,
-        contentType: "application/json",
-        messageId: message.eventId,
-      };
-
-      const result = this.channel.publish(
-        CONFIG.APPOINTMENT_EXCHANGE,
-        "appointment.rejected",
-        messageBuffer,
-        publishOptions
-      );
-
-      if (result) {
-        console.log(
-          `✓ Producer: Published appointment.rejected event | ID: ${message.eventId}`
-        );
-      } else {
-        console.warn(
-          `⚠️  Producer: Failed to publish appointment.rejected event`
-        );
-      }
-
-      return result;
-    } catch (error: any) {
-      console.error("❌ Producer: Error publishing event:", error?.message);
-      return false;
-    }
-  }
-
+  
   /**
    * Get connection status
    */
