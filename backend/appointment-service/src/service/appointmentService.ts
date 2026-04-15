@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import Appointment from "../models/Appointment";
 import AppointmentHistory from "../models/AppointmentHistory";
 import { ApiError } from "../utils/ApiError";
+import RabbitMQProducer from "../utils/RabbitMQProducer";
 
 type BookAppointmentInput = {
   patientId: string;
@@ -138,6 +139,22 @@ export const confirmAppointmentService = async (
   await appointment.save();
   await pushHistory(appointment.appointmentId, "confirmed", changedBy, notes || "Appointment confirmed");
 
+  //  Publish appointment confirmed event to RabbitMQ
+  try {
+    await RabbitMQProducer.publishAppointmentConfirmed({
+      appointmentId: appointment.appointmentId,
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.startTime,
+      status: "confirmed",
+      notes: notes || "Appointment confirmed by doctor",
+    });
+  } catch (error: any) {
+    console.error("  Error publishing appointment confirmed event:", error?.message);
+    // Don't fail the confirmation if event publishing fails
+  }
+
   return appointment;
 };
 
@@ -155,6 +172,7 @@ export const rejectAppointmentService = async (
   appointment.status = "rejected";
   await appointment.save();
   await pushHistory(appointment.appointmentId, "rejected", changedBy, notes || "Appointment rejected");
+
 
   return appointment;
 };

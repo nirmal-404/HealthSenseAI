@@ -13,6 +13,14 @@ type ConfigType = {
   PAYMENT_SERVICE_URL: string;
   TELEMEDICINE_SERVICE_URL: string;
   USER_SERVICE_URL: string;
+
+  // RabbitMQ Configuration
+  RABBITMQ_URL: string;
+  APPOINTMENT_EXCHANGE: string;
+  APPOINTMENT_QUEUE: string;
+  APPOINTMENT_ROUTING_KEY: string;
+  RABBITMQ_CONNECTION_MAX_RETRIES: number;
+  RABBITMQ_CONNECTION_RETRY_DELAY: number;
 };
 
 export const CONFIG: ConfigType = {
@@ -40,4 +48,12 @@ export const CONFIG: ConfigType = {
     process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5008",
   USER_SERVICE_URL:
     process.env.USER_SERVICE_URL || "http://localhost:5009",
+
+  // RabbitMQ Configuration
+  RABBITMQ_URL: process.env.RABBITMQ_URL || "amqp://guest:guest@localhost:5672",
+  APPOINTMENT_EXCHANGE: process.env.APPOINTMENT_EXCHANGE || "appointments",
+  APPOINTMENT_QUEUE: process.env.APPOINTMENT_QUEUE || "appointment_notifications",
+  APPOINTMENT_ROUTING_KEY: process.env.APPOINTMENT_ROUTING_KEY || "appointment.booked",
+  RABBITMQ_CONNECTION_MAX_RETRIES: Number(process.env.RABBITMQ_CONNECTION_MAX_RETRIES) || 5,
+  RABBITMQ_CONNECTION_RETRY_DELAY: Number(process.env.RABBITMQ_CONNECTION_RETRY_DELAY) || 2000,
 };
