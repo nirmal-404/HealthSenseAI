@@ -2,7 +2,13 @@ import Joi from "joi";
 
 export const registerValidation = {
     body: Joi.object().keys({
+        firstName: Joi.string().required(),
+        lastName: Joi.string().required(),
         email: Joi.string().required(),
+        phoneNumber: Joi.string().required(),
+        dateOfBirth: Joi.date().required(),
+        gender: Joi.string().required().valid("male", "female", "other"),
+        address: Joi.string().allow(""),
         password: Joi.string().required(),
         role: Joi.string().required().valid("patient", "doctor", "admin")
     })

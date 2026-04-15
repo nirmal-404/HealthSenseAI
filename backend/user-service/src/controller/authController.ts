@@ -1,24 +1,38 @@
 import { Response } from "express";
 import {
   forgotPasswordService,
+  getInternalUserByIdService,
   loginService,
   logoutService,
   refreshTokenService,
   registerService,
   resetPasswordService,
+  updateInternalUserStatusService,
   verifyEmailService,
-
+  changePasswordService,
+  deleteAccountService,
 } from "../service/authService";
 import { ApiError } from "../utils/ApiError"
 import { catchAsync } from "../utils/catchAsync";
 import httpStatus from "http-status";
 import { XRequest } from "../types/XRequest";
 import { XResponse } from "../types/XResponse";
+import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
 export const registerController = catchAsync(async (req: XRequest, res: Response) => {
-  const { email, password, role } = req.body;
 
-  const result = await registerService({ email, password, role });
+  const registerUserDTO: RegisterUserDTO = {
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    email: req.body.email,
+    phoneNumber: req.body.phoneNumber,
+    dateOfBirth: req.body.dateOfBirth,
+    gender: req.body.gender,
+    address: req.body.address,
+    password: req.body.password,
+    role: req.body.role,
+  };
+  const result = await registerService(registerUserDTO);
 
   const response: XResponse = {
     message: "Registration successful. Please verify your email.",
@@ -128,6 +142,59 @@ export const verifyEmailController = catchAsync(async (req: XRequest, res: Respo
 
   const response: XResponse = {
     message: "Email verified successfully.",
+  };
+  res.status(httpStatus.OK).send(response);
+});
+
+export const getInternalUserByIdController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await getInternalUserByIdService(String(req.params.id));
+
+  const response: XResponse = {
+    message: "User fetched successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const updateInternalUserStatusController = catchAsync(async (req: XRequest, res: Response) => {
+  const status = req.body?.status;
+
+  if (status !== "active" && status !== "suspended") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Status must be active or suspended");
+  }
+
+  const result = await updateInternalUserStatusService(String(req.params.id), status);
+
+  const response: XResponse = {
+    message: "User status updated successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const changePasswordController = catchAsync(async (req: XRequest, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  await changePasswordService(userId, currentPassword, newPassword);
+
+  const response: XResponse = {
+    message: "Password changed successfully",
+  };
+  res.status(httpStatus.OK).send(response);
+});
+
+export const deleteAccountController = catchAsync(async (req: XRequest, res: Response) => {
+  const userId = req.user.id;
+
+  await deleteAccountService(userId);
+
+  res.clearCookie("refreshToken");
+
+  const response: XResponse = {
+    message: "Account deleted successfully",
   };
   res.status(httpStatus.OK).send(response);
 });

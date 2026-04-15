@@ -9,7 +9,7 @@ export interface XRequest extends Request {
     };
 }
 export interface XAuthUser {
-    id: number;
+    id: string;
     email: string;
     role: string;
     displayName: string;

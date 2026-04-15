@@ -2,7 +2,12 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ToastProvider } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/hooks/useAuth";
+import { Toaster } from "sonner";
+import Navbar from "@/components/common/navbar";
+import HealthSenseBot from "@/components/ai/health-sense-bot";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
@@ -26,9 +31,14 @@ export default function RootLayout({
         <title>HealthSenseAI</title>
       </head>
       <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <Navbar />
+            {children}
+            <HealthSenseBot />
+            <Toaster position="top-right" />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

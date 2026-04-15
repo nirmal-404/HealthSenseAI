@@ -8,10 +8,11 @@ import { CONFIG } from "../config/envConfig";
 import httpStatus from "http-status";
 import jwt from "jsonwebtoken";
 import { JWTPayload } from "../types/JWTPayload";
+import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
-export const registerService = async ({ email, password, role = "patient" }: { email: string, password: string, role: string }) => {
+export const registerService = async (registerUserDTO: RegisterUserDTO) => {
   try {
-    const existingUser = await User.findOne({ email: email });
+    const existingUser = await User.findOne({ email: registerUserDTO.email });
     if (existingUser) throw new ApiError(httpStatus.CONFLICT, "Email already in use");
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -21,9 +22,15 @@ export const registerService = async ({ email, password, role = "patient" }: { e
       .digest("hex");
 
     const user = await User.create({
-      email,
-      passwordHash: password,
-      role,
+      firstName: registerUserDTO.firstName,
+      lastName: registerUserDTO.lastName,
+      email: registerUserDTO.email,
+      phoneNumber: registerUserDTO.phoneNumber,
+      passwordHash: registerUserDTO.password,
+      role: registerUserDTO.role,
+      dateOfBirth: registerUserDTO.dateOfBirth,
+      gender: registerUserDTO.gender,
+      address: registerUserDTO.address,
       emailVerificationToken: hashedVerificationToken,
       emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
     });
@@ -35,7 +42,12 @@ export const registerService = async ({ email, password, role = "patient" }: { e
       html: `<p>Click <a href="${verifyUrl}">here</a> to verify your email. Link expires in 24 hours.</p>`,
     });
 
-    return { userId: user.userId, email: user.email, role: user.role };
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    };
   } catch (error) {
     console.error(error);
     if (error instanceof ApiError) throw error;
@@ -72,7 +84,12 @@ export const loginService = async ({ email, password, ipAddress, userAgent }: { 
     return {
       accessToken,
       refreshToken,
-      user: { userId: user.userId, email: user.email, role: user.role },
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     };
   } catch (error) {
     console.error(error);
@@ -215,5 +232,101 @@ export const validateTokenService = async (token: string) => {
     console.error(error);
     if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
+  }
+};
+
+export const getInternalUserByIdService = async (id: string) => {
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      address: user.address,
+    };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const changePasswordService = async (userId: string, currentPassword: string, newPassword: string) => {
+  try {
+    const user = await User.findById(userId).select("+passwordHash");
+    if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+    if (!(await user.comparePassword(currentPassword))) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Current password is incorrect");
+    }
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    await Session.updateMany({ userId: user._id }, { isRevoked: true });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const deleteAccountService = async (userId: string) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+    user.isActive = false;
+    await user.save({ validateBeforeSave: false });
+
+    await Session.updateMany({ userId: user._id }, { isRevoked: true });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const updateInternalUserStatusService = async (
+  id: string,
+  status: "active" | "suspended"
+) => {
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    user.isActive = status === "active";
+    await user.save({ validateBeforeSave: false });
+
+    if (status === "suspended") {
+      await Session.updateMany({ userId: user._id }, { isRevoked: true });
+    }
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      status,
+    };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
   }
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkSymptomsController, answerFollowUpQuestionsController } from "../controller/symptomCheckerController";
+import { checkSymptomsController, answerFollowUpQuestionsController, getUserHistoryController } from "../controller/symptomCheckerController";
 import { followUpAnswersSchema, symptomCheckCreateSchema } from "../validations/aiResponseValidation";
 import { validate } from "../middlewares/validate";
 import requireAuth from "../middlewares/requireAuth";
@@ -18,6 +18,8 @@ router.post(
   validate(followUpAnswersSchema),
   answerFollowUpQuestionsController
 );
+
+router.get("/history", requireAuth, getUserHistoryController);
 
 
 router.get("/health", (req, res) => {

@@ -8,8 +8,6 @@ import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
 
 const app = express();
 
-console.log(CONFIG);
-
 connectDB();
 
 app.use(express.json());

@@ -50,8 +50,8 @@ issuedDate
 
 Functionalities:
 
-Patient registration and authentication
-Profile management (CRUD operations)
+Patient profile creation linked to authenticated user account
+Profile management (patient-specific fields)
 Upload and manage medical documents
 View medical history
 View past and current prescriptions
@@ -59,9 +59,13 @@ Retrieve patient dashboard with summary
 
 API Endpoints:
 
-POST /api/patients/register
+POST /api/patients/profile
 PUT /api/patients/{id}/profile
 POST /api/patients/{id}/documents
 GET /api/patients/{id}/medical-history
 GET /api/patients/{id}/prescriptions
 GET /api/patients/{id}/dashboard
+
+Internal Endpoints:
+
+GET /internal/patients/{id}/identity
