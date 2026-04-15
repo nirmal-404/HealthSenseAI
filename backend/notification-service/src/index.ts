@@ -11,6 +11,8 @@ import RabbitMQService from "./service/RabbitMQService";
 import {
   handleAppointmentBooked,
   handleConsultationCompleted,
+  handleAppointmentConfirmed,
+  handleAppointmentRejected,
 } from "./service/EventHandlers";
 
 const app = express();
@@ -72,6 +74,14 @@ const startServer = async () => {
     RabbitMQService.registerEventHandler(
       "appointment.booked",
       handleAppointmentBooked
+    );
+    RabbitMQService.registerEventHandler(
+      "appointment.confirmed",
+      handleAppointmentConfirmed
+    );
+    RabbitMQService.registerEventHandler(
+      "appointment.rejected",
+      handleAppointmentRejected
     );
     RabbitMQService.registerEventHandler(
       "consultation.completed",

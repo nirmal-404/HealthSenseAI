@@ -239,3 +239,260 @@ export const handleConsultationCompleted = async (
     throw error;
   }
 };
+
+/**
+ * Event handler for appointment.confirmed event
+ * Sends email and SMS notifications to both patient and doctor when doctor confirms appointment
+ */
+export const handleAppointmentConfirmed = async (
+  payload: AppointmentNotificationPayload
+): Promise<void> => {
+  console.log(
+    `\n✅ Processing appointment.confirmed event for appointment ${payload.appointmentId}`
+  );
+
+  try {
+    // Prepare notification data
+    const appointmentData = {
+      patientName: payload.patientName,
+      doctorName: payload.doctorName,
+      appointmentDate: payload.appointmentDate,
+      appointmentTime: payload.appointmentTime,
+    };
+
+    // Send patient notifications
+    console.log(`\n👤 Sending patient notifications...`);
+
+    const patientEmailSubject = `Appointment Confirmed by Dr. ${payload.doctorName}`;
+    const patientEmailContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #28a745;">✓ Appointment Confirmed</h2>
+            <p>Dear <strong>${payload.patientName}</strong>,</p>
+            <p>Great news! Your appointment has been confirmed by Dr. ${payload.doctorName}.</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Doctor:</strong> Dr. ${payload.doctorName}</p>
+              <p><strong>Date:</strong> ${payload.appointmentDate}</p>
+              <p><strong>Time:</strong> ${payload.appointmentTime}</p>
+              <p><strong>Appointment ID:</strong> ${payload.appointmentId}</p>
+            </div>
+            <p style="margin-top: 20px;">Please make sure to be ready 5 minutes before the scheduled time. You can join via the HealthSense app.</p>
+            <p>Best regards,<br><strong>HealthSense Team</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Patient email
+    const patientEmailResult = await EmailService.sendEmail(
+      payload.patientEmail,
+      patientEmailSubject,
+      patientEmailContent
+    );
+    console.log(
+      `${patientEmailResult.success ? "✓" : "✗"} Patient email: ${patientEmailResult.success ? "sent" : "failed"}`
+    );
+
+    // Patient SMS
+    const patientSMSMessage = `Hi ${payload.patientName}, your appointment with Dr. ${payload.doctorName} on ${payload.appointmentDate} at ${payload.appointmentTime} has been confirmed. -HealthSense`;
+    const patientSMSResult = await SMSService.sendSMS(
+      payload.patientPhone,
+      patientSMSMessage
+    );
+    console.log(
+      `${patientSMSResult.success ? "✓" : "✗"} Patient SMS: ${patientSMSResult.success ? "sent" : "failed"}`
+    );
+
+    // Send doctor notifications
+    console.log(`\n👨‍⚕️ Sending doctor notifications...`);
+
+    const doctorEmailSubject = `Appointment Confirmed with ${payload.patientName}`;
+    const doctorEmailContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #28a745;">✓ Appointment Confirmed</h2>
+            <p>Dear Dr. <strong>${payload.doctorName}</strong>,</p>
+            <p>You have successfully confirmed your appointment with ${payload.patientName}.</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Patient:</strong> ${payload.patientName}</p>
+              <p><strong>Date:</strong> ${payload.appointmentDate}</p>
+              <p><strong>Time:</strong> ${payload.appointmentTime}</p>
+              <p><strong>Appointment ID:</strong> ${payload.appointmentId}</p>
+              <p><strong>Patient Phone:</strong> ${payload.patientPhone}</p>
+            </div>
+            <p style="margin-top: 20px;">The patient has been notified and is prepared for the appointment. Please be ready to start the consultation at the scheduled time.</p>
+            <p>Best regards,<br><strong>HealthSense Team</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Doctor email
+    const doctorEmailResult = await EmailService.sendEmail(
+      payload.doctorEmail,
+      doctorEmailSubject,
+      doctorEmailContent
+    );
+    console.log(
+      `${doctorEmailResult.success ? "✓" : "✗"} Doctor email: ${doctorEmailResult.success ? "sent" : "failed"}`
+    );
+
+    // Doctor SMS
+    const doctorSMSMessage = `Hi Dr. ${payload.doctorName}, your appointment with ${payload.patientName} on ${payload.appointmentDate} at ${payload.appointmentTime} is confirmed. -HealthSense`;
+    const doctorSMSResult = await SMSService.sendSMS(
+      payload.doctorPhone,
+      doctorSMSMessage
+    );
+    console.log(
+      `${doctorSMSResult.success ? "✓" : "✗"} Doctor SMS: ${doctorSMSResult.success ? "sent" : "failed"}`
+    );
+
+    // Log summary
+    const successCount = [
+      patientEmailResult.success,
+      patientSMSResult.success,
+      doctorEmailResult.success,
+      doctorSMSResult.success,
+    ].filter(Boolean).length;
+
+    console.log(
+      `\n✅ Appointment confirmation notifications completed: ${successCount}/4 sent`
+    );
+    console.log(`   Appointment ID: ${payload.appointmentId}\n`);
+  } catch (error: any) {
+    console.error(
+      `❌ Error handling appointment.confirmed event: ${error?.message}`
+    );
+    throw error;
+  }
+};
+
+/**
+ * Event handler for appointment.rejected event
+ * Sends email and SMS notifications to both patient and doctor when doctor rejects appointment
+ */
+export const handleAppointmentRejected = async (
+  payload: AppointmentNotificationPayload
+): Promise<void> => {
+  console.log(
+    `\n❌ Processing appointment.rejected event for appointment ${payload.appointmentId}`
+  );
+
+  try {
+    // Prepare notification data
+    const appointmentData = {
+      patientName: payload.patientName,
+      doctorName: payload.doctorName,
+      appointmentDate: payload.appointmentDate,
+      appointmentTime: payload.appointmentTime,
+    };
+
+    // Send patient notifications
+    console.log(`\n👤 Sending patient notifications...`);
+
+    const patientEmailSubject = `Appointment Cancelled by Dr. ${payload.doctorName}`;
+    const patientEmailContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #dc3545;">Appointment Cancelled</h2>
+            <p>Dear <strong>${payload.patientName}</strong>,</p>
+            <p>Unfortunately, Dr. ${payload.doctorName} has cancelled your appointment scheduled for ${payload.appointmentDate} at ${payload.appointmentTime}.</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Doctor:</strong> Dr. ${payload.doctorName}</p>
+              <p><strong>Date:</strong> ${payload.appointmentDate}</p>
+              <p><strong>Time:</strong> ${payload.appointmentTime}</p>
+              <p><strong>Appointment ID:</strong> ${payload.appointmentId}</p>
+            </div>
+            <p style="margin-top: 20px;">Please schedule a new appointment with another available doctor through the HealthSense app. We apologize for any inconvenience.</p>
+            <p>Best regards,<br><strong>HealthSense Team</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Patient email
+    const patientEmailResult = await EmailService.sendEmail(
+      payload.patientEmail,
+      patientEmailSubject,
+      patientEmailContent
+    );
+    console.log(
+      `${patientEmailResult.success ? "✓" : "✗"} Patient email: ${patientEmailResult.success ? "sent" : "failed"}`
+    );
+
+    // Patient SMS
+    const patientSMSMessage = `Hi ${payload.patientName}, your appointment with Dr. ${payload.doctorName} on ${payload.appointmentDate} at ${payload.appointmentTime} has been cancelled. Please schedule with another doctor. -HealthSense`;
+    const patientSMSResult = await SMSService.sendSMS(
+      payload.patientPhone,
+      patientSMSMessage
+    );
+    console.log(
+      `${patientSMSResult.success ? "✓" : "✗"} Patient SMS: ${patientSMSResult.success ? "sent" : "failed"}`
+    );
+
+    // Send doctor notifications
+    console.log(`\n👨‍⚕️ Sending doctor notifications...`);
+
+    const doctorEmailSubject = `Appointment Cancellation Confirmed`;
+    const doctorEmailContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #dc3545;">Appointment Cancelled</h2>
+            <p>Dear Dr. <strong>${payload.doctorName}</strong>,</p>
+            <p>Your appointment cancellation has been processed and the patient has been notified.</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Patient:</strong> ${payload.patientName}</p>
+              <p><strong>Date:</strong> ${payload.appointmentDate}</p>
+              <p><strong>Time:</strong> ${payload.appointmentTime}</p>
+              <p><strong>Appointment ID:</strong> ${payload.appointmentId}</p>
+            </div>
+            <p style="margin-top: 20px;">The appointment slot is now available for other patients to book.</p>
+            <p>Best regards,<br><strong>HealthSense Team</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Doctor email
+    const doctorEmailResult = await EmailService.sendEmail(
+      payload.doctorEmail,
+      doctorEmailSubject,
+      doctorEmailContent
+    );
+    console.log(
+      `${doctorEmailResult.success ? "✓" : "✗"} Doctor email: ${doctorEmailResult.success ? "sent" : "failed"}`
+    );
+
+    // Doctor SMS
+    const doctorSMSMessage = `Hi Dr. ${payload.doctorName}, your appointment with ${payload.patientName} on ${payload.appointmentDate} at ${payload.appointmentTime} has been cancelled. -HealthSense`;
+    const doctorSMSResult = await SMSService.sendSMS(
+      payload.doctorPhone,
+      doctorSMSMessage
+    );
+    console.log(
+      `${doctorSMSResult.success ? "✓" : "✗"} Doctor SMS: ${doctorSMSResult.success ? "sent" : "failed"}`
+    );
+
+    // Log summary
+    const successCount = [
+      patientEmailResult.success,
+      patientSMSResult.success,
+      doctorEmailResult.success,
+      doctorSMSResult.success,
+    ].filter(Boolean).length;
+
+    console.log(
+      `\n✅ Appointment rejection notifications completed: ${successCount}/4 sent`
+    );
+    console.log(`   Appointment ID: ${payload.appointmentId}\n`);
+  } catch (error: any) {
+    console.error(
+      `❌ Error handling appointment.rejected event: ${error?.message}`
+    );
+    throw error;
+  }
+};
