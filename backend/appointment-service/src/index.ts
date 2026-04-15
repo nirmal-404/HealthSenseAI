@@ -1,16 +1,27 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 import express from "express";
-// import "dotenv/config";
 import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
 import connectDB from "./config/db";
 import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
-
-const dotenv = require("dotenv");
-dotenv.config()
+import RabbitMQProducer from "./utils/RabbitMQProducer";
 
 const app = express();
 
 connectDB();
+
+// Initialize RabbitMQ Producer
+(async () => {
+  try {
+    console.log("\n Initializing RabbitMQ Producer...");
+    await RabbitMQProducer.connect();
+    console.log(" RabbitMQ Producer initialized successfully\n");
+  } catch (error) {
+    console.error("  RabbitMQ Producer initialization error (service will continue):", error);
+  }
+})();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
