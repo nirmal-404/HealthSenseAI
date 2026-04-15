@@ -1,13 +1,23 @@
+import "dotenv/config";
+
+const num = (v: string | undefined, d: number) =>
+  v !== undefined && v !== "" ? Number(v) : d;
+
 export const CONFIG = {
-  PORT: process.env.PORT || 5009,
+  PORT: num(process.env.PORT, 50008),
+  NODE_ENV: process.env.NODE_ENV || "development",
+  MONGO_URI:
+    process.env.MONGO_URI ||
+    "mongodb://localhost:27017/healthsenseai_telemedicine",
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
-  ADMIN_MANAGEMENT_SERVICE_URL: process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",
-  AI_SYMPTOM_CHECKER_SERVICE_URL: process.env.AI_SYMPTOM_CHECKER_SERVICE_URL || "http://localhost:5002",
-  APPOINTMENT_SERVICE_URL: process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003",
-  DOCTOR_MANAGEMENT_SERVICE_URL: process.env.DOCTOR_MANAGEMENT_SERVICE_URL || "http://localhost:5004",
-  NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:5005",
-  PATIENT_MANAGEMENT_SERVICE_URL: process.env.PATIENT_MANAGEMENT_SERVICE_URL || "http://localhost:5006",
-  PAYMENT_SERVICE_URL: process.env.PAYMENT_SERVICE_URL || "http://localhost:5007",
-  TELEMEDICINE_SERVICE_URL: process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5008",
-  USER_SERVICE_URL: process.env.USER_SERVICE_URL || "http://localhost:5009",
+  REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
+  ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY || "",
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
+  JITSI_PUBLIC_DOMAIN:
+    process.env.JITSI_PUBLIC_DOMAIN || "meet.jit.si",
+  HTTP_TIMEOUT_MS: num(process.env.HTTP_TIMEOUT_MS, 30000),
+  RETRY_ATTEMPTS: num(process.env.RETRY_ATTEMPTS, 3),
+  RETRY_BASE_DELAY_MS: num(process.env.RETRY_BASE_DELAY_MS, 500),
+  CLAUDE_MODEL:
+    process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001",
 };

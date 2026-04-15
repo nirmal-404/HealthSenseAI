@@ -1,13 +1,20 @@
+import "dotenv/config";
+
+const num = (v: string | undefined, d: number) =>
+  v !== undefined && v !== "" ? Number(v) : d;
+
 export const CONFIG = {
-  PORT: process.env.PORT || 5009,
+  PORT: num(process.env.PORT, 50004),
+  NODE_ENV: process.env.NODE_ENV || "development",
+  MONGO_URI:
+    process.env.MONGO_URI || "mongodb://localhost:27017/healthsenseai_doctors",
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
-  ADMIN_MANAGEMENT_SERVICE_URL: process.env.ADMIN_MANAGEMENT_SERVICE_URL || "http://localhost:5001",
-  AI_SYMPTOM_CHECKER_SERVICE_URL: process.env.AI_SYMPTOM_CHECKER_SERVICE_URL || "http://localhost:5002",
-  APPOINTMENT_SERVICE_URL: process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003",
-  DOCTOR_MANAGEMENT_SERVICE_URL: process.env.DOCTOR_MANAGEMENT_SERVICE_URL || "http://localhost:5004",
-  NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:5005",
-  PATIENT_MANAGEMENT_SERVICE_URL: process.env.PATIENT_MANAGEMENT_SERVICE_URL || "http://localhost:5006",
-  PAYMENT_SERVICE_URL: process.env.PAYMENT_SERVICE_URL || "http://localhost:5007",
-  TELEMEDICINE_SERVICE_URL: process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5008",
-  USER_SERVICE_URL: process.env.USER_SERVICE_URL || "http://localhost:5009",
+  PRESCRIPTION_JWT_SECRET:
+    process.env.PRESCRIPTION_JWT_SECRET || "defaultsecret",
+  PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || "http://localhost:50000/api",
+  APPOINTMENT_SERVICE_URL:
+    process.env.APPOINTMENT_SERVICE_URL || "http://localhost:50003",
+  PATIENT_MANAGEMENT_SERVICE_URL:
+    process.env.PATIENT_MANAGEMENT_SERVICE_URL || "http://localhost:50006",
+  HTTP_TIMEOUT_MS: num(process.env.HTTP_TIMEOUT_MS, 15000),
 };
