@@ -97,98 +97,106 @@ export function RescheduleAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl border border-[#dce5f2] bg-white p-0">
+      <DialogContent className="max-w-md rounded-lg border border-slate-200 bg-white p-0">
         <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-[#e6edf8] px-5 py-4">
-            <DialogTitle className="text-lg font-semibold text-[#1f2a44]">Reschedule Appointment</DialogTitle>
-            <DialogDescription className="text-sm text-slate-500">
-              Update appointment date and time. Status will return to pending.
+          {/* Header */}
+          <DialogHeader className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-6 py-5">
+            <DialogTitle className="text-xl font-bold text-slate-900">Reschedule Appointment</DialogTitle>
+            <DialogDescription className="mt-1 text-slate-600">
+              Choose a new date and time for your appointment. The status will be updated to pending.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 px-5 py-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="reschedule-date" className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Date
+          {/* Content */}
+          <div className="space-y-4 px-6 py-5">
+            <div className="space-y-2">
+              <Label htmlFor="reschedule-date" className="text-sm font-semibold text-slate-700">
+                New Date
               </Label>
               <Input
                 id="reschedule-date"
                 type="date"
                 value={appointmentDate}
                 onChange={(event) => setAppointmentDate(event.target.value)}
-                className="h-10 rounded-xl border-[#dce5f2] bg-[#f9fbff]"
+                className="h-10 rounded-lg border-slate-300 bg-white"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="reschedule-start-time" className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Start time
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="reschedule-start-time" className="text-sm font-semibold text-slate-700">
+                  Start Time
                 </Label>
                 <Input
                   id="reschedule-start-time"
                   type="time"
                   value={startTime}
                   onChange={(event) => setStartTime(event.target.value)}
-                  className="h-10 rounded-xl border-[#dce5f2] bg-[#f9fbff]"
+                  className="h-10 rounded-lg border-slate-300 bg-white"
                   required
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="reschedule-end-time" className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  End time
+              <div className="space-y-2">
+                <Label htmlFor="reschedule-end-time" className="text-sm font-semibold text-slate-700">
+                  End Time
                 </Label>
                 <Input
                   id="reschedule-end-time"
                   type="time"
                   value={endTime}
                   onChange={(event) => setEndTime(event.target.value)}
-                  className="h-10 rounded-xl border-[#dce5f2] bg-[#f9fbff]"
+                  className="h-10 rounded-lg border-slate-300 bg-white"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="reschedule-notes" className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Notes (optional)
+            <div className="space-y-2">
+              <Label htmlFor="reschedule-notes" className="text-sm font-semibold text-slate-700">
+                Notes (Optional)
               </Label>
               <Textarea
                 id="reschedule-notes"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Add a reason for rescheduling"
-                className="min-h-[88px] rounded-xl border-[#dce5f2] bg-[#f9fbff]"
+                placeholder="Add a reason for rescheduling..."
+                className="min-h-20 rounded-lg border-slate-300 bg-white resize-none"
               />
             </div>
 
             {validationError ? (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                {validationError}
-              </p>
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <p className="font-semibold mb-1">Cannot reschedule</p>
+                <p>{validationError}</p>
+              </div>
             ) : null}
           </div>
 
-          <DialogFooter className="rounded-b-2xl border-t border-[#e6edf8] bg-[#f8fbff] p-4 sm:justify-end">
+          {/* Footer */}
+          <DialogFooter className="border-t border-slate-200 bg-slate-50 px-6 py-4 sm:justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              className="rounded-xl border-[#dce5f2]"
+              className="rounded-lg border-slate-300 hover:bg-slate-100"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Close
+              Cancel
             </Button>
-            <Button type="submit" className="rounded-xl bg-[#3559d5] text-white hover:bg-[#2d4db9]" disabled={submitting}>
+            <Button
+              type="submit"
+              className="rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400"
+              disabled={submitting}
+            >
               {submitting ? (
                 <>
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                'Save changes'
+                'Save Changes'
               )}
             </Button>
           </DialogFooter>

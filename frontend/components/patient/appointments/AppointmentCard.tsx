@@ -1,6 +1,6 @@
-import { CalendarClock, CircleDollarSign, Clock3, Pill, Stethoscope } from 'lucide-react';
+import { CalendarDays, Clock, DollarSign, FileText, Stethoscope, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import type { Appointment } from '@/lib/appointments.types';
 import {
   canCancel,
@@ -31,89 +31,117 @@ export function AppointmentCard({
   const cancelAllowed = canCancel(appointment.status);
 
   return (
-    <Card className="border border-[#dce5f4] bg-white py-0 shadow-[0_10px_24px_rgba(45,90,180,0.07)]">
-      <CardContent className="space-y-4 p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-[#1f2a44]">
-              {formatAppointmentDate(appointment.appointmentDate)}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              {formatAppointmentTimeRange(appointment.startTime, appointment.endTime)}
-            </p>
+    <Card className="group border border-slate-200 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+      <CardContent className="p-6">
+        {/* Header with status */}
+        <div className="flex items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <CalendarDays className="h-4 w-4 text-blue-600" />
+              <h3 className="text-lg font-semibold text-slate-900">
+                {formatAppointmentDate(appointment.appointmentDate)}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Clock className="h-4 w-4 text-slate-400" />
+              <span>{formatAppointmentTimeRange(appointment.startTime, appointment.endTime)}</span>
+            </div>
           </div>
           <AppointmentStatusBadge status={appointment.status} />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-          <div className="rounded-xl border border-[#e6edf8] bg-[#f9fbff] p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <Stethoscope className="h-3.5 w-3.5" /> Doctor
-            </p>
-            <p className="mt-1 text-sm font-medium text-[#1f2a44]">{doctorLabel || appointment.doctorId}</p>
+        {/* Main content - Doctor and type in one row */}
+        <div className="space-y-5 mb-6">
+          {/* Doctor info - prominent */}
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Stethoscope className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                Healthcare Provider
+              </p>
+              <p className="text-base font-semibold text-slate-900">{doctorLabel || appointment.doctorId}</p>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-[#e6edf8] bg-[#f9fbff] p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <CalendarClock className="h-3.5 w-3.5" /> Type
-            </p>
-            <p className="mt-1 text-sm font-medium text-[#1f2a44]">
-              {formatStatusLabel(appointment.appointmentType)}
-            </p>
+          {/* Type and payment in 2-column grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-start gap-2">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center pt-0.5">
+                <span className="text-xs font-bold text-purple-600">Rx</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  Appointment Type
+                </p>
+                <p className="text-sm font-medium text-slate-900">
+                  {formatStatusLabel(appointment.appointmentType)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  Payment
+                </p>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getPaymentStatusClasses(
+                    appointment.paymentStatus
+                  )}`}
+                >
+                  {formatStatusLabel(appointment.paymentStatus)}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-[#e6edf8] bg-[#f9fbff] p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <CircleDollarSign className="h-3.5 w-3.5" /> Payment
-            </p>
-            <span
-              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${getPaymentStatusClasses(
-                appointment.paymentStatus
-              )}`}
-            >
-              {formatStatusLabel(appointment.paymentStatus)}
-            </span>
-          </div>
-
-          <div className="rounded-xl border border-[#e6edf8] bg-[#f9fbff] p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <Clock3 className="h-3.5 w-3.5" /> Appointment ID
-            </p>
-            <p className="mt-1 text-sm font-medium text-[#1f2a44]">{appointment.appointmentId}</p>
-          </div>
+          {/* Symptoms if present */}
+          {appointment.symptoms ? (
+            <div className="flex gap-3 p-4 rounded-lg bg-slate-50 border border-slate-100">
+              <FileText className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  Chief Complaint
+                </p>
+                <p className="text-sm text-slate-700">{appointment.symptoms}</p>
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        {appointment.symptoms ? (
-          <div className="rounded-xl border border-[#e6edf8] bg-[#f9fbff] p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <Pill className="h-3.5 w-3.5" /> Symptoms / Reason
-            </p>
-            <p className="mt-1 text-sm text-slate-600">{appointment.symptoms}</p>
+        {/* Footer with actions */}
+        <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-100">
+          <p className="text-xs text-slate-500">ID: {appointment.appointmentId.slice(0, 12)}...</p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              onClick={() => onReschedule(appointment)}
+              disabled={!rescheduleAllowed || Boolean(actionLoading)}
+            >
+              {actionLoading === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
+            </Button>
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="rounded-lg"
+              onClick={() => onCancel(appointment)}
+              disabled={!cancelAllowed || Boolean(actionLoading)}
+            >
+              {actionLoading === 'cancel' ? 'Cancelling...' : 'Cancel'}
+            </Button>
           </div>
-        ) : null}
+        </div>
       </CardContent>
-
-      <CardFooter className="flex flex-wrap items-center justify-end gap-2 border-t border-[#e6edf8] bg-[#fcfdff] p-3">
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-xl border-[#dce5f2] bg-white text-slate-700 hover:bg-[#eef4ff] hover:text-[#2f58db]"
-          onClick={() => onReschedule(appointment)}
-          disabled={!rescheduleAllowed || Boolean(actionLoading)}
-        >
-          {actionLoading === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
-        </Button>
-
-        <Button
-          type="button"
-          variant="destructive"
-          className="rounded-xl"
-          onClick={() => onCancel(appointment)}
-          disabled={!cancelAllowed || Boolean(actionLoading)}
-        >
-          {actionLoading === 'cancel' ? 'Cancelling...' : 'Cancel'}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

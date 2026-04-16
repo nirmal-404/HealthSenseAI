@@ -11,7 +11,7 @@ export function AppointmentStatusBadge({ status, className }: AppointmentStatusB
   return (
     <span
       className={cn(
-        'inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold',
+        'inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold tracking-wider uppercase',
         getAppointmentStatusClasses(status),
         className
       )}
