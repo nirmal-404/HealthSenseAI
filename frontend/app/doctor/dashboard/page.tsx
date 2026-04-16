@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { Calendar, Users, Activity, Clock, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
@@ -25,9 +26,12 @@ export default function DoctorDashboard() {
             <h1 className="text-3xl font-bold tracking-tight">Welcome, Dr. {user?.lastName}</h1>
             <p className="text-slate-500 text-lg">Here's what's happening in your clinic today.</p>
           </div>
-          <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-            View Today's Schedule
-          </Button>
+          <div className="flex items-center gap-3">
+            <NotificationBell userId={user?.id} />
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+              View Today's Schedule
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
