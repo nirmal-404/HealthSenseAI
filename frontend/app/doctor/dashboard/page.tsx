@@ -94,15 +94,21 @@ export default function DoctorDashboard() {
               <CardDescription>Common tasks and shortcuts.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed">
-                <Users className="w-4 h-4 text-teal-600" /> Member Records
-              </Button>
-              <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed">
-                <Activity className="w-4 h-4 text-orange-600" /> Prescriptions
-              </Button>
-              <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed">
-                <Clock className="w-4 h-4 text-blue-600" /> Set Working Hours
-              </Button>
+              <Link href="/doctor/profile" className="w-full">
+                <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed hover:border-teal-400 hover:bg-teal-50/50">
+                  <Users className="w-4 h-4 text-teal-600" /> Manage Profile
+                </Button>
+              </Link>
+              <Link href="/doctor/sessions" className="w-full">
+                <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed hover:border-orange-400 hover:bg-orange-50/50">
+                  <Activity className="w-4 h-4 text-orange-600" /> Telemedicine Sessions
+                </Button>
+              </Link>
+              <Link href="/doctor/availability" className="w-full">
+                <Button variant="outline" className="justify-start gap-2 h-12 w-full border-dashed hover:border-blue-400 hover:bg-blue-50/50">
+                  <Clock className="w-4 h-4 text-blue-600" /> Set Working Hours
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -110,3 +116,5 @@ export default function DoctorDashboard() {
     </RoleGuard>
   );
 }
+
+import Link from 'next/link';

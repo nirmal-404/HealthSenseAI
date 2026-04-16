@@ -1,14 +1,23 @@
 import { Router } from "express";
 import {
-  blockTimeSlotController,
-  getDoctorAppointmentsController,
-  getInternalDoctorBillingController,
-  getTimeSlotsController,
-  registerDoctorController,
-  searchDoctorController,
-  setAvailabilityController,
-  updateDoctorProfileController,
+  blockTimeSlot,
+  getAppointments,
+  getInternalBilling,
+  getTimeSlots,
+  postRegister,
+  searchDoctors,
+  putAvailability,
+  putDoctor,
+  getDoctor,
+  getAvailability,
+  patientReports,
 } from "../controller/doctorController";
+import {
+  createPrescription,
+  getPrescription,
+  listPrescriptionsByDoctor,
+  verifyPrescription,
+} from "../controller/prescriptionController";
 import { allowRoles } from "../middlewares/allowRoles";
 import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
@@ -22,23 +31,47 @@ import {
   searchDoctorValidation,
   setAvailabilityValidation,
   updateDoctorProfileValidation,
+  doctorIdValidation,
+  createPrescriptionValidation,
+  listPrecscriptionsValidation,
+  prescriptionIdValidation,
+  verifyPrescriptionValidation,
 } from "../validations/doctorValidations";
 
 const router = Router();
 
+// --- Internal ---
 router.get(
   "/internal/doctors/:id/billing",
   requireInternalServiceKey,
   validate(internalDoctorBillingValidation),
-  getInternalDoctorBillingController
+  getInternalBilling
 );
 
+// --- Registration & Search ---
 router.post(
   "/register",
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(registerDoctorValidation),
-  registerDoctorController
+  postRegister
+);
+
+router.get("/search", validate(searchDoctorValidation), searchDoctors);
+
+// --- Profile & Availability ---
+router.get(
+  "/:id",
+  validate(doctorIdValidation),
+  getDoctor
+);
+
+router.put(
+  "/:id",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(updateDoctorProfileValidation),
+  putDoctor
 );
 
 router.put(
@@ -46,7 +79,13 @@ router.put(
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(updateDoctorProfileValidation),
-  updateDoctorProfileController
+  putDoctor
+);
+
+router.get(
+  "/:id/availability",
+  validate(doctorIdValidation),
+  getAvailability
 );
 
 router.post(
@@ -54,13 +93,13 @@ router.post(
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(setAvailabilityValidation),
-  setAvailabilityController
+  putAvailability
 );
 
 router.get(
   "/:id/time-slots",
   validate(getTimeSlotsValidation),
-  getTimeSlotsController
+  getTimeSlots
 );
 
 router.put(
@@ -68,17 +107,52 @@ router.put(
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(blockTimeSlotValidation),
-  blockTimeSlotController
+  blockTimeSlot
 );
 
-router.get("/search", validate(searchDoctorValidation), searchDoctorController);
-
+// --- Appointments & Reports ---
 router.get(
   "/:id/appointments",
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(doctorAppointmentsValidation),
-  getDoctorAppointmentsController
+  getAppointments
+);
+
+router.get(
+  "/:doctorId/patients/:patientId/reports",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  patientReports
+);
+
+// --- Prescriptions ---
+router.post(
+  "/prescriptions",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(createPrescriptionValidation),
+  createPrescription
+);
+
+router.get(
+  "/prescriptions/:id",
+  requireAuth,
+  validate(prescriptionIdValidation),
+  getPrescription
+);
+
+router.get(
+  "/prescriptions/doctor/:doctorId",
+  requireAuth,
+  validate(listPrecscriptionsValidation),
+  listPrescriptionsByDoctor
+);
+
+router.get(
+  "/prescriptions/verify/:token",
+  validate(verifyPrescriptionValidation),
+  verifyPrescription
 );
 
 router.get("/health", (req, res) => {

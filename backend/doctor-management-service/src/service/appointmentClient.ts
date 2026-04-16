@@ -38,4 +38,19 @@ export class AppointmentClient {
       );
     });
   }
+
+  /**
+   * Fetches appointments for a doctor.
+   */
+  async getDoctorAppointments(doctorId: string) {
+    const url = `${CONFIG.APPOINTMENT_SERVICE_URL}/internal/appointments/doctor/${doctorId}`;
+    return withRetry("appointment.listByDoctor", async () => {
+      const res = await axios.get(url, {
+        timeout: CONFIG.HTTP_TIMEOUT_MS,
+        validateStatus: () => true,
+      });
+      if (res.status === 200) return res.data;
+      return { items: [], message: "No appointments or service error" };
+    });
+  }
 }

@@ -10,3 +10,5 @@ export async function connectDb(): Promise<void> {
   await mongoose.connect(CONFIG.MONGO_URI);
   logger.info("MongoDB connected");
 }
+
+export default connectDb;
