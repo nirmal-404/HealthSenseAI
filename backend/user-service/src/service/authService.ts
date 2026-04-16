@@ -388,3 +388,63 @@ export const updateInternalUserStatusService = async (
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
   }
 };
+
+type GetDoctorsInput = {
+  name?: string;
+  limit?: number;
+};
+
+const clampLimit = (value?: number) => {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return undefined;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 1), 500);
+};
+
+const escapeRegex = (input: string) => input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const getDoctorsService = async ({ name, limit }: GetDoctorsInput = {}) => {
+  try {
+    const query: Record<string, any> = {
+      role: "doctor",
+    };
+
+    if (name?.trim()) {
+      const value = escapeRegex(name.trim());
+      query.$or = [
+        { firstName: { $regex: value, $options: "i" } },
+        { lastName: { $regex: value, $options: "i" } },
+        { email: { $regex: value, $options: "i" } },
+      ];
+    }
+
+    const normalizedLimit = clampLimit(limit);
+
+    const doctorsQuery = User.find(query)
+      .select("_id userId firstName lastName email role")
+      .sort({ firstName: 1, lastName: 1 });
+
+    if (normalizedLimit) {
+      doctorsQuery.limit(normalizedLimit);
+    }
+
+    const doctors = await doctorsQuery.lean();
+
+    return doctors.map((doctor: any) => ({
+      id: String(doctor._id),
+      doctorId: String(doctor._id),
+      _id: String(doctor._id),
+      userId: doctor.userId ? String(doctor.userId) : undefined,
+      firstName: doctor.firstName,
+      lastName: doctor.lastName,
+      name: [doctor.firstName, doctor.lastName].filter(Boolean).join(" ").trim(),
+      email: doctor.email,
+      role: doctor.role,
+    }));
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};

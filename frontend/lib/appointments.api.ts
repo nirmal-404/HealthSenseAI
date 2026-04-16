@@ -14,7 +14,11 @@ import type {
 const unwrap = <T>(response: { data: ApiEnvelope<T> }) => response.data?.data;
 
 const normalizeDoctorOption = (doctor: DoctorRecord): DoctorOption | null => {
-  const id = doctor.doctorId || doctor.id || doctor._id || '';
+  if (doctor.role && doctor.role !== 'doctor') {
+    return null;
+  }
+
+  const id = doctor.doctorId || doctor.id || doctor._id || doctor.userId || '';
   if (!id) {
     return null;
   }
@@ -92,16 +96,32 @@ export async function searchDoctors(params: DoctorSearchParams = {}): Promise<Do
     query.name = params.name.trim();
   }
 
-  if (params.specialty?.trim()) {
-    query.specialty = params.specialty.trim();
+  if (params.limit) {
+    query.limit = String(params.limit);
   }
 
-  const response = await api.get<ApiEnvelope<DoctorRecord[]>>('/doctors/search', {
-    params: query,
-  });
+  try {
+    const response = await api.get<ApiEnvelope<DoctorRecord[]>>('/auth/doctors', {
+      params: query,
+    });
 
-  const doctors = unwrap(response) || [];
-  return doctors
-    .map(normalizeDoctorOption)
-    .filter((doctor): doctor is DoctorOption => Boolean(doctor));
+    const doctors = unwrap(response) || [];
+    return doctors
+      .map(normalizeDoctorOption)
+      .filter((doctor): doctor is DoctorOption => Boolean(doctor));
+  } catch {
+    const legacyResponse = await api.get<ApiEnvelope<DoctorRecord[]>>('/doctors/search', {
+      params: params.specialty?.trim()
+        ? {
+            ...query,
+            specialty: params.specialty.trim(),
+          }
+        : query,
+    });
+
+    const doctors = unwrap(legacyResponse) || [];
+    return doctors
+      .map(normalizeDoctorOption)
+      .filter((doctor): doctor is DoctorOption => Boolean(doctor));
+  }
 }

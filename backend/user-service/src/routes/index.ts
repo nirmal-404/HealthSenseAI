@@ -12,6 +12,7 @@ import {
   updateInternalUserStatusController,
   changePasswordController,
   deleteAccountController,
+  getDoctorsController,
 } from "../controller/authController";
 import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
@@ -35,6 +36,7 @@ router.get("/verify-email/:token", validate(verifyEmailValidation), verifyEmailC
 
 router.post("/logout", requireAuth, logoutController);
 router.get("/me", requireAuth, getCurrentUserController);
+router.get("/doctors", getDoctorsController);
 router.post("/change-password", requireAuth, changePasswordController);
 router.delete("/delete-account", requireAuth, deleteAccountController);
 

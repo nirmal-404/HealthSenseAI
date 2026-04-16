@@ -58,12 +58,15 @@ export interface AppointmentStatusResponse {
 export interface DoctorSearchParams {
   name?: string;
   specialty?: string;
+  limit?: number;
 }
 
 export interface DoctorRecord {
   doctorId?: string;
   id?: string;
   _id?: string;
+  userId?: string;
+  role?: string;
   firstName?: string;
   lastName?: string;
   name?: string;

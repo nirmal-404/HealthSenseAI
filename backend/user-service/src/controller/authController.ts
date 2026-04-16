@@ -12,6 +12,7 @@ import {
   verifyEmailService,
   changePasswordService,
   deleteAccountService,
+  getDoctorsService,
 } from "../service/authService";
 import { ApiError } from "../utils/ApiError"
 import { catchAsync } from "../utils/catchAsync";
@@ -208,5 +209,22 @@ export const deleteAccountController = catchAsync(async (req: XRequest, res: Res
   const response: XResponse = {
     message: "Account deleted successfully",
   };
+  res.status(httpStatus.OK).send(response);
+});
+
+export const getDoctorsController = catchAsync(async (req: XRequest, res: Response) => {
+  const name = typeof req.query.name === "string" ? req.query.name : undefined;
+  const limitRaw = typeof req.query.limit === "string" ? Number(req.query.limit) : undefined;
+
+  const result = await getDoctorsService({
+    name,
+    limit: Number.isFinite(limitRaw as number) ? (limitRaw as number) : undefined,
+  });
+
+  const response: XResponse = {
+    message: "Doctors fetched successfully",
+    data: result,
+  };
+
   res.status(httpStatus.OK).send(response);
 });
