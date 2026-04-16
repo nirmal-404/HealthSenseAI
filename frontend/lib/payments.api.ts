@@ -37,3 +37,13 @@ export async function getPaymentStatus(paymentId: string): Promise<PaymentStatus
 
   return unwrap(response);
 }
+
+export async function confirmStripePayment(
+  paymentId: string
+): Promise<PaymentStatusResponse> {
+  const response = await api.post<ApiEnvelope<PaymentStatusResponse>>(
+    `/payments/${paymentId}/confirm`
+  );
+
+  return unwrap(response);
+}

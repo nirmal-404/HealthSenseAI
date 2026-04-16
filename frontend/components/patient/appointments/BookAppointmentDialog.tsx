@@ -165,16 +165,13 @@ export function BookAppointmentDialog({
           {/* Header */}
           <DialogHeader className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-5 py-3 flex-shrink-0">
             <DialogTitle className="text-xl font-bold text-slate-900">Book an Appointment</DialogTitle>
-            <DialogDescription className="mt-1 text-xs text-slate-600">
-              Select doctor, date, time, and type of consultation
-            </DialogDescription>
           </DialogHeader>
 
           {/* Content - scrollable */}
           <div className="space-y-3 px-5 py-4 overflow-y-auto flex-1">
             {/* Doctor Selection Section */}
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-slate-900 uppercase">Healthcare Provider</h3>
+              <h3 className="text-xs font-semibold text-slate-900 uppercase">Doctor</h3>
               
               <div className="flex gap-1.5">
                 <Input
@@ -277,7 +274,6 @@ export function BookAppointmentDialog({
               <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 text-blue-600" />
                     <div>
                       <p className="text-xs font-semibold text-blue-700">Fee</p>
                       <p className="text-xs text-blue-600">

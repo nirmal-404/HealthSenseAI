@@ -20,6 +20,8 @@ export interface PaymentRecord {
   userId?: string;
   patientId: string;
   doctorId: string;
+  doctorFirstName?: string;
+  doctorLastName?: string;
   amount: number;
   currency: string;
   paymentMethod: 'mock' | 'stripe' | 'payhere';

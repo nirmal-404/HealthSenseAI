@@ -154,7 +154,17 @@ const getDoctorBillingData = async (doctorId: string): Promise<DoctorBillingData
       throw new ApiError(httpStatus.NOT_FOUND, "Doctor not found");
     }
 
-    throw new ApiError(httpStatus.BAD_GATEWAY, "Failed to fetch doctor billing details");
+    // Return graceful fallback if doctor service is unavailable
+    console.warn(
+      `[payment-service] Failed to fetch doctor billing details for ${doctorId}, using fallback`
+    );
+    return {
+      doctorId,
+      userMongoId: "",
+      consultationFee: 0,
+      firstName: "",
+      lastName: "",
+    };
   }
 };
 
@@ -286,11 +296,56 @@ export const createPaymentIntentService = async (
     throw new ApiError(httpStatus.CONFLICT, "Payment already completed for this appointment");
   }
 
+  // Check for existing pending payment - reuse it instead of creating a duplicate
+  const existingPendingPayment = await Payment.findOne({
+    appointmentId: appointment.appointmentId,
+    status: "pending",
+  }).sort({ createdAt: -1 });
+
+  if (existingPendingPayment) {
+    console.log(
+      `[payment-service] Reusing existing pending payment ${existingPendingPayment.paymentId} for appointment ${appointment.appointmentId}`
+    );
+
+    let clientSecret: string | null = null;
+
+    // Try to get the clientSecret from Stripe if we have a PaymentIntent ID
+    if (existingPendingPayment.stripePaymentIntentId) {
+      try {
+        const stripe = getStripeClient();
+        const existingPaymentIntent = await stripe.paymentIntents.retrieve(
+          existingPendingPayment.stripePaymentIntentId
+        );
+        clientSecret = existingPaymentIntent.client_secret;
+      } catch (error) {
+        console.warn(
+          `[payment-service] Could not retrieve existing PaymentIntent ${existingPendingPayment.stripePaymentIntentId}`
+        );
+      }
+    }
+
+    return {
+      paymentId: existingPendingPayment.paymentId,
+      appointmentId: existingPendingPayment.appointmentId,
+      userId: existingPendingPayment.userId,
+      patientId: existingPendingPayment.patientId,
+      doctorId: existingPendingPayment.doctorId,
+      amount: existingPendingPayment.amount,
+      currency: existingPendingPayment.currency,
+      status: existingPendingPayment.status,
+      stripePaymentIntentId: existingPendingPayment.stripePaymentIntentId || "",
+      clientSecret,
+      notes: payload.notes || "",
+    };
+  }
+
   const amountInCents = Math.round(amount * 100);
 
   if (amountInCents <= 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid payment amount");
   }
+
+  const doctorBilling = await getDoctorBillingData(appointment.doctorId);
 
   const stripe = getStripeClient();
   const paymentIntent = await stripe.paymentIntents.create({
@@ -308,18 +363,50 @@ export const createPaymentIntentService = async (
     description: `HealthSense consultation payment for appointment ${appointment.appointmentId}`,
   });
 
-  const payment = await Payment.create({
-    appointmentId: appointment.appointmentId,
-    userId: patientIdentity.userMongoId,
-    patientId: appointment.patientId,
-    doctorId: appointment.doctorId,
-    amount,
-    currency: "LKR",
-    paymentMethod: "stripe",
-    stripePaymentIntentId: paymentIntent.id,
-    status: "pending",
-    initiatedAt: new Date(),
-  });
+  let payment;
+  try {
+    payment = await Payment.create({
+      appointmentId: appointment.appointmentId,
+      userId: patientIdentity.userMongoId,
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId,
+      doctorFirstName: doctorBilling.firstName,
+      doctorLastName: doctorBilling.lastName,
+      amount,
+      currency: "LKR",
+      paymentMethod: "stripe",
+      stripePaymentIntentId: paymentIntent.id,
+      status: "pending",
+      initiatedAt: new Date(),
+    });
+  } catch (error: any) {
+    // Handle duplicate key error - reuse existing pending payment
+    if (error.code === 11000 && error.keyValue?.status === "pending") {
+      console.log(
+        `[payment-service] Duplicate pending payment detected for appointment ${appointment.appointmentId}, reusing existing payment`
+      );
+      const existingPayment = await Payment.findOne({
+        appointmentId: appointment.appointmentId,
+        status: "pending",
+      });
+      if (existingPayment) {
+        return {
+          paymentId: existingPayment.paymentId,
+          appointmentId: existingPayment.appointmentId,
+          userId: existingPayment.userId,
+          patientId: existingPayment.patientId,
+          doctorId: existingPayment.doctorId,
+          amount: existingPayment.amount,
+          currency: existingPayment.currency,
+          status: existingPayment.status,
+          stripePaymentIntentId: paymentIntent.id,
+          clientSecret: paymentIntent.client_secret,
+          notes: payload.notes || "",
+        };
+      }
+    }
+    throw error;
+  }
 
   console.log(
     `[payment-service] Stripe PaymentIntent created for appointment ${appointment.appointmentId}, payment ${payment.paymentId}`
@@ -462,6 +549,77 @@ export const getPaymentStatusService = async (paymentId: string, requestedBy: XA
   };
 };
 
+export const confirmStripePaymentService = async (
+  paymentId: string,
+  requestedBy: XAuthUser
+) => {
+  const payment = await Payment.findOne({ paymentId });
+
+  if (!payment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
+  }
+
+  if (requestedBy.role === "patient") {
+    const identity = await getPatientIdentityData(payment.patientId);
+
+    if (identity.userMongoId !== requestedBy.id) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Forbidden: Access denied");
+    }
+  }
+
+  if (payment.paymentMethod !== "stripe") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Payment is not a Stripe payment");
+  }
+
+  if (!payment.stripePaymentIntentId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Stripe payment intent is missing");
+  }
+
+  if (!["success", "completed", "refunded"].includes(payment.status)) {
+    const stripe = getStripeClient();
+    const paymentIntent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+
+    if (paymentIntent.status === "succeeded") {
+      payment.status = "success";
+      payment.transactionId = paymentIntent.id;
+      payment.failureReason = "";
+      payment.completedAt = new Date();
+      await payment.save();
+
+      await confirmAppointmentPayment(
+        payment.appointmentId,
+        payment.paymentId,
+        "success",
+        "Payment confirmed by client"
+      );
+    } else if (
+      paymentIntent.status === "canceled" ||
+      paymentIntent.status === "requires_payment_method"
+    ) {
+      payment.status = "failed";
+      payment.failureReason = "Payment failed at Stripe";
+      await payment.save();
+
+      await confirmAppointmentPayment(
+        payment.appointmentId,
+        payment.paymentId,
+        "failed",
+        "Payment failed at Stripe"
+      );
+    }
+  }
+
+  return {
+    paymentId: payment.paymentId,
+    appointmentId: payment.appointmentId,
+    status: payment.status,
+    normalizedStatus: getNormalizedStatus(payment.status),
+    amount: payment.amount,
+    currency: payment.currency,
+    updatedAt: payment.updatedAt,
+  };
+};
+
 export const getPaymentByIdService = async (id: string, requestedBy: XAuthUser) => {
   const payment = await Payment.findOne({ paymentId: id });
 
@@ -485,6 +643,8 @@ export const getPaymentByIdService = async (id: string, requestedBy: XAuthUser) 
     userId: payment.userId,
     patientId: payment.patientId,
     doctorId: payment.doctorId,
+    doctorFirstName: payment.doctorFirstName,
+    doctorLastName: payment.doctorLastName,
     amount: payment.amount,
     currency: payment.currency,
     paymentMethod: payment.paymentMethod,
@@ -507,8 +667,65 @@ export const getPatientPaymentHistoryService = async (
 ) => {
   await assertPatientOwnership(patientId, requestedBy);
 
-  const history = await Payment.find({ patientId }).sort({ initiatedAt: -1 });
-  return history;
+  const history = await Payment.find({ patientId })
+    .select('_id paymentId appointmentId doctorId doctorFirstName doctorLastName amount currency status initiatedAt')
+    .sort({ initiatedAt: -1 });
+  
+  // Enrich payment history with doctor names for records that don't have them
+  const enrichedHistory = await Promise.all(
+    history.map(async (payment) => {
+      let doctorFirstName = payment.doctorFirstName;
+      let doctorLastName = payment.doctorLastName;
+
+      // If doctor name is missing, try to fetch it from doctor service (non-blocking)
+      if (!doctorFirstName || !doctorLastName) {
+        try {
+          const doctorBilling = await getDoctorBillingData(payment.doctorId);
+          if (doctorBilling.firstName || doctorBilling.lastName) {
+            doctorFirstName = doctorBilling.firstName;
+            doctorLastName = doctorBilling.lastName;
+
+            // Update the payment record with doctor name for future queries (fire and forget)
+            Payment.updateOne(
+              { _id: payment._id },
+              {
+                doctorFirstName,
+                doctorLastName,
+              }
+            ).catch((error) => {
+              console.error(
+                `[payment-service] Failed to update payment record with doctor name: ${
+                  error instanceof Error ? error.message : 'Unknown error'
+                }`
+              );
+            });
+          }
+        } catch (error) {
+          console.warn(
+            `[payment-service] Failed to fetch doctor name for doctor ${payment.doctorId}: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`
+          );
+          // Use fallback display
+          doctorFirstName = doctorFirstName || 'Doctor';
+          doctorLastName = doctorLastName || '';
+        }
+      }
+
+      return {
+        paymentId: payment.paymentId,
+        appointmentId: payment.appointmentId,
+        doctorFirstName: doctorFirstName || 'Doctor',
+        doctorLastName: doctorLastName || '',
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        initiatedAt: payment.initiatedAt,
+      };
+    })
+  );
+
+  return enrichedHistory;
 };
 
 export const refundPaymentService = async (

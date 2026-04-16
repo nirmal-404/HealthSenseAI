@@ -90,6 +90,28 @@ export const bookAppointmentService = async (
 ) => {
   const consultationFee = getConsultationFee(payload.appointmentType);
 
+  // Check for duplicate appointments created within the last 60 seconds
+  // This prevents double-submissions and network retries from creating duplicates
+  const recentThreshold = new Date(Date.now() - 60000); // 60 seconds ago
+  
+  const existingAppointment = await Appointment.findOne({
+    patientId: payload.patientId,
+    doctorId: payload.doctorId,
+    appointmentDate: payload.appointmentDate,
+    startTime: payload.startTime,
+    endTime: payload.endTime,
+    appointmentType: payload.appointmentType,
+    status: "pending",
+    createdAt: { $gte: recentThreshold },
+  });
+
+  if (existingAppointment) {
+    console.log(
+      `[appointment-service] Duplicate booking detected for patient ${payload.patientId} with doctor ${payload.doctorId}. Returning existing appointment ${existingAppointment.appointmentId}`
+    );
+    return existingAppointment;
+  }
+
   const appointment = await Appointment.create({
     ...payload,
     consultationFee,
