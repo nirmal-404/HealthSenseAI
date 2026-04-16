@@ -6,6 +6,7 @@ type ConfigType = {
   PRESCRIPTION_JWT_SECRET: string;
   MONGO_URI: string;
   NODE_ENV: string;
+  ENV: string;
   API_GATEWAY_URL: string;
   PUBLIC_BASE_URL: string;
   APPOINTMENT_SERVICE_URL: string;
@@ -23,6 +24,7 @@ type ConfigType = {
 export const CONFIG: ConfigType = {
   PORT: Number(process.env.PORT) || 50004,
   NODE_ENV: process.env.NODE_ENV || "development",
+  ENV: process.env.ENV || process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET || "defaultsecret",
   PRESCRIPTION_JWT_SECRET: process.env.PRESCRIPTION_JWT_SECRET || "defaultsecret",
   MONGO_URI:

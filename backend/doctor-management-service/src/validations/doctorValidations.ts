@@ -1,30 +1,24 @@
 import Joi from "joi";
 
-const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
 export const registerDoctorValidation = {
   body: Joi.object().keys({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     email: Joi.string().email().required(),
-    phoneNumber: Joi.string().required(),
-    dateOfBirth: Joi.date().required(),
-    gender: Joi.string().valid("male", "female", "other").required(),
-    address: Joi.string().allow(""),
-    password: Joi.string().min(8).required(),
-    specialization: Joi.string().required(),
-    qualification: Joi.array().items(Joi.string()).default([]),
-    licenseNumber: Joi.string().required(),
-    experience: Joi.number().min(0).default(0),
-    consultationFee: Joi.number().min(0).default(0),
+    phoneNumber: Joi.string().allow(""),
+    speciality: Joi.string().required(),
+    qualifications: Joi.array().items(Joi.string()).default([]),
+    bio: Joi.string().allow(""),
+    licenseNumber: Joi.string().allow(""),
+    // Also allow old names for compatibility if needed
+    specialization: Joi.string(),
+    qualification: Joi.array().items(Joi.string()),
     biography: Joi.string().allow(""),
-    profileImage: Joi.string().uri().allow(""),
-  }),
-};
-
-export const doctorIdValidation = {
-  params: Joi.object().keys({
-    id: Joi.string().required(),
+    // Optional fields for registration if they are passed
+    dateOfBirth: Joi.date(),
+    gender: Joi.string().valid("male", "female", "other"),
+    password: Joi.string().min(8),
+    address: Joi.string().allow(""),
   }),
 };
 
@@ -37,14 +31,14 @@ export const updateDoctorProfileValidation = {
       firstName: Joi.string(),
       lastName: Joi.string(),
       phoneNumber: Joi.string(),
+      speciality: Joi.string(),
+      qualifications: Joi.array().items(Joi.string()),
+      bio: Joi.string().allow(""),
+      licenseNumber: Joi.string(),
+      // Also allow old names
       specialization: Joi.string(),
       qualification: Joi.array().items(Joi.string()),
-      experience: Joi.number().min(0),
-      consultationFee: Joi.number().min(0),
       biography: Joi.string().allow(""),
-      profileImage: Joi.string().uri().allow(""),
-      isVerified: Joi.boolean(),
-      rating: Joi.number().min(0).max(5),
     })
     .min(1),
 };
@@ -54,23 +48,24 @@ export const setAvailabilityValidation = {
     id: Joi.string().required(),
   }),
   body: Joi.object().keys({
-    dayOfWeek: Joi.string()
-      .valid("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
-      .required(),
-    startTime: Joi.string().pattern(timePattern).required(),
-    endTime: Joi.string().pattern(timePattern).required(),
-    slotDuration: Joi.number().integer().min(5).default(30),
-    isActive: Joi.boolean().default(true),
+    weeklySlots: Joi.array().items(
+      Joi.object().keys({
+        dayOfWeek: Joi.string().required(),
+        startTime: Joi.string().required(),
+        endTime: Joi.string().required(),
+      })
+    ),
+    blockedDates: Joi.array().items(
+      Joi.object().keys({
+        date: Joi.string().required(),
+      })
+    ),
   }),
 };
 
 export const getTimeSlotsValidation = {
   params: Joi.object().keys({
     id: Joi.string().required(),
-  }),
-  query: Joi.object().keys({
-    date: Joi.date(),
-    status: Joi.string().valid("available", "booked", "blocked"),
   }),
 };
 
@@ -83,8 +78,15 @@ export const blockTimeSlotValidation = {
 
 export const searchDoctorValidation = {
   query: Joi.object().keys({
+    speciality: Joi.string(),
     specialty: Joi.string(),
     name: Joi.string(),
+  }),
+};
+
+export const doctorIdValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
   }),
 };
 
@@ -97,5 +99,47 @@ export const doctorAppointmentsValidation = {
 export const internalDoctorBillingValidation = {
   params: Joi.object().keys({
     id: Joi.string().required(),
+  }),
+};
+
+export const createPrescriptionValidation = {
+  body: Joi.object().keys({
+    patientId: Joi.string().required(),
+    doctorId: Joi.string().required(),
+    consultationSessionId: Joi.string().allow(""),
+    medications: Joi.array()
+      .items(
+        Joi.object().keys({
+          name: Joi.string().required(),
+          dosage: Joi.string().required(),
+          frequency: Joi.string().required(),
+          duration: Joi.string().required(),
+        })
+      )
+      .min(1)
+      .required(),
+    notes: Joi.string().allow(""),
+  }),
+};
+
+export const listPrecscriptionsValidation = {
+  params: Joi.object().keys({
+    doctorId: Joi.string().required(),
+  }),
+  query: Joi.object().keys({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+  }),
+};
+
+export const prescriptionIdValidation = {
+  params: Joi.object().keys({
+    id: Joi.string().required(),
+  }),
+};
+
+export const verifyPrescriptionValidation = {
+  params: Joi.object().keys({
+    token: Joi.string().required(),
   }),
 };
