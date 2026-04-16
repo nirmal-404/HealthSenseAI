@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, HeartPulse, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import { Menu, X, HeartPulse, User, LogOut, Settings, LayoutDashboard, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -31,6 +31,9 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
+          <Link href="/doctors/search" className="text-sm font-medium text-teal-600 hover:text-teal-700 font-bold transition-colors">
+            Find a Doctor
+          </Link>
           <Link href="/about" className="text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors">
             About
           </Link>
@@ -65,6 +68,14 @@ export default function Navbar() {
                     <span>Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
+                {user?.role === 'doctor' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/doctor/sessions" className="cursor-pointer">
+                      <Video className="mr-2 h-4 w-4" />
+                      <span>My Sessions</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
