@@ -1,7 +1,7 @@
 import { Router } from "express";
 import adminManagementRoutes from "./admin-management-routes";
 import aiSymptomCheckerRoutes from "./ai-symptom-checker-routes";
-import appointmentRespondRoutes from "./appointment-respond-routes";
+//import appointmentRespondRoutes from "./appointment-respond-routes";
 import appointmentRoutes from "./appointment-routes";
 import doctorManagementRoutes from "./doctor-management-routes";
 import notificationRoutes from "./notification-routes";
@@ -19,7 +19,7 @@ router.use("/admin", adminManagementRoutes);
 router.use("/ai", aiSymptomCheckerRoutes);
 router.use("/sessions", sessionsRoutes);
 router.use("/prescriptions", prescriptionsRoutes);
-router.use("/appointments", appointmentRespondRoutes);
+//router.use("/appointments", appointmentRespondRoutes);
 router.use("/appointments", appointmentRoutes);
 router.use("/doctors", doctorManagementRoutes);
 router.use("/notifications", notificationRoutes);

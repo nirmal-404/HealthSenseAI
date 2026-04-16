@@ -1,18 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
-import routes from "./routes/index.js";
-import { handleStripeWebhookController } from "./controller/paymentController.js";
-import { CONFIG } from "./config/envConfig.js";
-import connectDB from "./config/db.js";
-import { errorConverter, errorHandler } from "./middlewares/errorMiddleware.js";
-
 dotenv.config();
 
 const ENV = process.env.ENV || "local";
 
-if (ENV === "local") {
+if (ENV == "local") {
   dotenv.config({ path: `.env.${ENV}`, override: true });
 }
+
+import routes from "./routes";
+import { handleStripeWebhookController } from "./controller/paymentController";
+import { CONFIG } from "./config/envConfig";
+import connectDB from "./config/db";
+import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
 
 const app = express();
 
