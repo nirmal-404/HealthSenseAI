@@ -18,6 +18,7 @@ export interface IAppointment extends Document {
   appointmentType: "video" | "in-person";
   symptoms?: string;
   consultationNotes?: string;
+  consultationFee: number;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
 }
 
@@ -69,6 +70,11 @@ const appointmentSchema = new mongoose.Schema<IAppointment>(
       type: String,
       default: "",
       trim: true,
+    },
+    consultationFee: {
+      type: Number,
+      required: [true, "consultationFee is required"],
+      min: [0, "consultationFee cannot be negative"],
     },
     consultationNotes: {
       type: String,

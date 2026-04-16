@@ -56,6 +56,27 @@ export async function getPatientAppointments(
   return unwrap(response) || [];
 }
 
+export async function getDoctorAppointments(
+  doctorId: string,
+  filter: AppointmentFilterQuery = {}
+): Promise<Appointment[]> {
+  const params: Record<string, string> = {};
+
+  if (filter.status && filter.status !== 'all') {
+    params.status = filter.status;
+  }
+
+  if (filter.date) {
+    params.date = filter.date;
+  }
+
+  const response = await api.get<ApiEnvelope<Appointment[]>>(`/appointments/doctor/${doctorId}`, {
+    params,
+  });
+
+  return unwrap(response) || [];
+}
+
 export async function getAppointmentById(appointmentId: string): Promise<Appointment> {
   const response = await api.get<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}`);
   return unwrap(response);
@@ -86,6 +107,20 @@ export async function rescheduleAppointment(
 
 export async function cancelAppointment(appointmentId: string): Promise<Appointment> {
   const response = await api.delete<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/cancel`);
+  return unwrap(response);
+}
+
+export async function confirmAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/confirm`, {
+    notes: notes ?? '',
+  });
+  return unwrap(response);
+}
+
+export async function approveAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/approve`, {
+    notes: notes ?? '',
+  });
   return unwrap(response);
 }
 

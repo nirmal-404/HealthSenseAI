@@ -10,6 +10,7 @@ import {
   formatStatusLabel,
   getPaymentStatusClasses,
 } from '@/lib/appointments.utils';
+import { formatFeeAsCurrency } from '@/lib/appointmentPricing';
 import { AppointmentStatusBadge } from '@/components/patient/appointments/AppointmentStatusBadge';
 
 type AppointmentCardProps = {
@@ -87,8 +88,13 @@ export function AppointmentCard({
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Payment
+                  Consultation Fee
                 </p>
+                {appointment.consultationFee ? (
+                  <p className="text-base font-bold text-green-600 mb-2">{formatFeeAsCurrency(appointment.consultationFee)}</p>
+                ) : (
+                  <p className="text-base font-bold text-slate-400 mb-2">Not set</p>
+                )}
                 <span
                   className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getPaymentStatusClasses(
                     appointment.paymentStatus

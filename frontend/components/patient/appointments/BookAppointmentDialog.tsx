@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,7 @@ import type {
   DoctorOption,
 } from '@/lib/appointments.types';
 import { isPastDate, isValidTimeRange } from '@/lib/appointments.utils';
+import { getConsultationFee, formatFeeAsCurrency } from '@/lib/appointmentPricing';
 
 type BookAppointmentDialogProps = {
   open: boolean;
@@ -84,6 +85,11 @@ export function BookAppointmentDialog({
   const selectedDoctorLabel = useMemo(
     () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId)?.name,
     [doctorOptions, selectedDoctorId]
+  );
+
+  const consultationFee = useMemo(
+    () => getConsultationFee(appointmentType),
+    [appointmentType]
   );
 
   const resetForm = () => {
@@ -154,47 +160,47 @@ export function BookAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] w-[min(96vw,800px)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-0 shadow-lg sm:max-w-[800px]">
-        <form onSubmit={handleSubmit}>
+      <DialogContent className="max-h-[95vh] w-[min(96vw,750px)] rounded-lg border border-slate-200 bg-white p-0 shadow-lg sm:max-w-[750px] flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
           {/* Header */}
-          <DialogHeader className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-6 py-5">
-            <DialogTitle className="text-2xl font-bold text-slate-900">Book an Appointment</DialogTitle>
-            <DialogDescription className="mt-2 text-slate-600">
-              Schedule a consultation with a healthcare provider. Select a doctor, date, time, and consultation type.
+          <DialogHeader className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-5 py-3 flex-shrink-0">
+            <DialogTitle className="text-xl font-bold text-slate-900">Book an Appointment</DialogTitle>
+            <DialogDescription className="mt-1 text-xs text-slate-600">
+              Select doctor, date, time, and type of consultation
             </DialogDescription>
           </DialogHeader>
 
-          {/* Content */}
-          <div className="space-y-6 px-6 py-6">
+          {/* Content - scrollable */}
+          <div className="space-y-3 px-5 py-4 overflow-y-auto flex-1">
             {/* Doctor Selection Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">Healthcare Provider</h3>
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-slate-900 uppercase">Healthcare Provider</h3>
               
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-1.5">
                 <Input
                   id="doctor-search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search by doctor name..."
-                  className="flex-1 h-10 rounded-lg border-slate-300 bg-white"
+                  placeholder="Search doctors..."
+                  className="flex-1 h-8 text-xs rounded-lg border-slate-300 bg-white"
                 />
                 <Button
                   type="button"
                   onClick={() => void handleSearchDoctors()}
                   variant="outline"
-                  className="h-10 rounded-lg border-slate-300 hover:bg-blue-50"
+                  className="h-8 px-2 rounded-lg border-slate-300 hover:bg-blue-50"
                   disabled={doctorLoading}
                 >
                   {doctorLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Search className="h-4 w-4" />
+                    <Search className="h-3 w-3" />
                   )}
                 </Button>
               </div>
 
               {/* Doctor list */}
-              <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="max-h-32 space-y-1 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
                 {doctorOptions.length ? (
                   doctorOptions.map((doctor) => {
                     const active = selectedDoctorId === doctor.id;
@@ -203,44 +209,41 @@ export function BookAppointmentDialog({
                         key={doctor.id}
                         type="button"
                         onClick={() => setSelectedDoctorId(doctor.id)}
-                        className={`w-full rounded-lg border-2 px-4 py-3 text-left transition ${
+                        className={`w-full rounded-lg border-2 px-3 py-1.5 text-left transition text-xs ${
                           active
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50'
                         }`}
                       >
-                        <p className="font-semibold text-slate-900">{doctor.name}</p>
+                        <p className="font-semibold text-slate-900 text-xs">{doctor.name}</p>
                         {doctor.specialization ? (
                           <p className="text-xs text-slate-600">{doctor.specialization}</p>
-                        ) : null}
-                        {doctor.email ? (
-                          <p className="text-xs text-slate-500">{doctor.email}</p>
                         ) : null}
                       </button>
                     );
                   })
                 ) : (
-                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-100 px-3 py-8 text-center text-sm text-slate-600">
-                    Search for a doctor to get started
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-100 px-2 py-3 text-center text-xs text-slate-600">
+                    Search for doctors
                   </p>
                 )}
               </div>
 
               {selectedDoctorLabel ? (
-                <p className="text-sm font-medium text-emerald-600">✓ Selected: {selectedDoctorLabel}</p>
+                <p className="text-xs font-medium text-emerald-600">✓ {selectedDoctorLabel}</p>
               ) : null}
               {doctorError ? (
-                <p className="text-sm text-rose-600">⚠ {doctorError}</p>
+                <p className="text-xs text-rose-600">⚠ {doctorError}</p>
               ) : null}
             </div>
 
             {/* Appointment Details Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">Appointment Details</h3>
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-slate-900 uppercase">Appointment Details</h3>
               
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="appointment-date" className="text-sm font-semibold text-slate-700">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="appointment-date" className="text-xs font-semibold text-slate-700">
                     Date
                   </Label>
                   <Input
@@ -248,53 +251,69 @@ export function BookAppointmentDialog({
                     type="date"
                     value={appointmentDate}
                     onChange={(event) => setAppointmentDate(event.target.value)}
-                    className="h-10 rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-slate-700">Consultation Type</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-700">Type</Label>
                   <Select
                     value={appointmentType}
                     onValueChange={(value) => setAppointmentType(value as AppointmentType)}
                   >
-                    <SelectTrigger className="h-10 rounded-lg border-slate-300 bg-white text-slate-900">
-                      <SelectValue placeholder="Select type" />
+                    <SelectTrigger className="h-8 text-xs rounded-lg border-slate-300 bg-white text-slate-900">
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="video">Video Consultation</SelectItem>
-                      <SelectItem value="in-person">In-Person Visit</SelectItem>
+                      <SelectItem value="video">Video</SelectItem>
+                      <SelectItem value="in-person">In-Person</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="start-time" className="text-sm font-semibold text-slate-700">
-                    Start Time
+              {/* Consultation Fee Display */}
+              <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue-700">Fee</p>
+                      <p className="text-xs text-blue-600">
+                        {appointmentType === 'video' ? 'Video' : 'In-Person'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-blue-700">{formatFeeAsCurrency(consultationFee)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="start-time" className="text-xs font-semibold text-slate-700">
+                    Start
                   </Label>
                   <Input
                     id="start-time"
                     type="time"
                     value={startTime}
                     onChange={(event) => setStartTime(event.target.value)}
-                    className="h-10 rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="end-time" className="text-sm font-semibold text-slate-700">
-                    End Time
+                <div className="space-y-1">
+                  <Label htmlFor="end-time" className="text-xs font-semibold text-slate-700">
+                    End
                   </Label>
                   <Input
                     id="end-time"
                     type="time"
                     value={endTime}
                     onChange={(event) => setEndTime(event.target.value)}
-                    className="h-10 rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
                     required
                   />
                 </div>
@@ -302,34 +321,34 @@ export function BookAppointmentDialog({
             </div>
 
             {/* Chief Complaint Section */}
-            <div className="space-y-2">
-              <Label htmlFor="symptoms" className="text-sm font-semibold text-slate-700">
-                Chief Complaint / Reason for Visit
+            <div className="space-y-1">
+              <Label htmlFor="symptoms" className="text-xs font-semibold text-slate-700 uppercase">
+                Reason for Visit
               </Label>
               <Textarea
                 id="symptoms"
                 value={symptoms}
                 onChange={(event) => setSymptoms(event.target.value)}
-                placeholder="Describe your symptoms or reason for consultation..."
-                className="min-h-24 rounded-lg border-slate-300 bg-white resize-none"
+                placeholder="Describe symptoms or reason..."
+                className="min-h-16 text-xs rounded-lg border-slate-300 bg-white resize-none"
               />
             </div>
 
             {/* Validation Error */}
             {validationError ? (
-              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                <p className="font-semibold mb-1">Unable to book appointment</p>
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <p className="font-semibold mb-0.5">Unable to book</p>
                 <p>{validationError}</p>
               </div>
             ) : null}
           </div>
 
           {/* Footer */}
-          <DialogFooter className="sticky bottom-0 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:justify-end gap-2">
+          <DialogFooter className="border-t border-slate-200 bg-slate-50 px-5 py-3 sm:justify-end gap-2 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
-              className="rounded-lg border-slate-300 hover:bg-slate-100"
+              className="rounded-lg border-slate-300 text-xs hover:bg-slate-100 h-8 px-3"
               onClick={() => handleClose(false)}
               disabled={submitting}
             >
@@ -337,16 +356,16 @@ export function BookAppointmentDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400"
+              className="rounded-lg bg-blue-600 text-white text-xs hover:bg-blue-700 disabled:bg-blue-400 h-8 px-4"
               disabled={submitting}
             >
               {submitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
                   Booking...
                 </>
               ) : (
-                'Book Appointment'
+                'Book'
               )}
             </Button>
           </DialogFooter>

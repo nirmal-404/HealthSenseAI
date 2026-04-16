@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  approveAppointmentController,
   bookAppointmentController,
   cancelAppointmentController,
   confirmAppointmentPaymentController,
@@ -124,6 +125,14 @@ router.put(
   allowRoles("doctor", "admin"),
   validate(decisionValidation),
   confirmAppointmentController
+);
+
+router.put(
+  "/:id/approve",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(decisionValidation),
+  approveAppointmentController
 );
 
 router.put(

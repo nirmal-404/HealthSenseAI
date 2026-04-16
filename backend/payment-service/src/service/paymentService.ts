@@ -27,6 +27,8 @@ type AppointmentForPayment = {
   appointmentDate: Date | string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "rejected";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  appointmentType?: "video" | "in-person";
+  consultationFee?: number;
 };
 
 type DoctorBillingData = {
@@ -269,11 +271,10 @@ export const createPaymentIntentService = async (
     throw new ApiError(httpStatus.FORBIDDEN, "Payer account is not active");
   }
 
-  const doctorBilling = await getDoctorBillingData(appointment.doctorId);
-  const amount = Number(doctorBilling.consultationFee);
+  const amount = Number(appointment.consultationFee);
 
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Doctor consultation fee is not configured");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Appointment consultation fee is not configured");
   }
 
   const existingSuccessfulPayment = await Payment.findOne({
@@ -364,12 +365,13 @@ export const processAppointmentPaymentService = async (
     throw new ApiError(httpStatus.FORBIDDEN, "Payer account is not active");
   }
 
-  const doctorBilling = await getDoctorBillingData(appointment.doctorId);
-  const amount = Number(doctorBilling.consultationFee);
+  const amount = Number(appointment.consultationFee);
 
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Doctor consultation fee is not configured");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Appointment consultation fee is not configured");
   }
+
+  const doctorBilling = await getDoctorBillingData(appointment.doctorId);
 
   const existingCompletedPayment = await Payment.findOne({
     appointmentId,
@@ -427,7 +429,7 @@ export const processAppointmentPaymentService = async (
       doctorId: doctorBilling.doctorId,
       firstName: doctorBilling.firstName,
       lastName: doctorBilling.lastName,
-      consultationFee: doctorBilling.consultationFee,
+      consultationFee: amount,
     },
   };
 };

@@ -1,8 +1,11 @@
 import httpStatus from "http-status";
+import axios from "axios";
 import Appointment from "../models/Appointment";
 import AppointmentHistory from "../models/AppointmentHistory";
 import { ApiError } from "../utils/ApiError";
 import RabbitMQProducer from "../utils/RabbitMQProducer";
+import { getConsultationFee } from "../utils/appointmentPricing";
+import { CONFIG } from "../config/envConfig";
 
 type BookAppointmentInput = {
   patientId: string;
@@ -31,6 +34,13 @@ type ConfirmAppointmentPaymentInput = {
   notes?: string;
 };
 
+type PatientIdentity = {
+  patientId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
+
 const pushHistory = async (
   appointmentId: string,
   statusChange: string,
@@ -46,12 +56,43 @@ const pushHistory = async (
   });
 };
 
+const fetchPatientIdentity = async (patientId: string): Promise<PatientIdentity | null> => {
+  if (!patientId) {
+    return null;
+  }
+
+  try {
+    const response = await axios.get(
+      `${CONFIG.PATIENT_MANAGEMENT_SERVICE_URL}/internal/patients/${encodeURIComponent(
+        patientId
+      )}/identity`,
+      {
+        headers: {
+          "x-internal-service-key": CONFIG.JWT_SECRET,
+        },
+        timeout: 4000,
+      }
+    );
+
+    return response.data?.data || null;
+  } catch (error: any) {
+    console.warn(
+      "  Unable to fetch patient identity:",
+      error?.response?.data?.message || error?.message
+    );
+    return null;
+  }
+};
+
 export const bookAppointmentService = async (
   payload: BookAppointmentInput,
   changedBy: string
 ) => {
+  const consultationFee = getConsultationFee(payload.appointmentType);
+
   const appointment = await Appointment.create({
     ...payload,
+    consultationFee,
     status: "pending",
     paymentStatus: "pending",
   });
@@ -217,6 +258,38 @@ export const getAppointmentsByDoctorService = async (
   return appointments;
 };
 
+export const getAppointmentsByDoctorWithPatientsService = async (
+  doctorId: string,
+  filter: AppointmentQueryFilter
+) => {
+  const appointments = await getAppointmentsByDoctorService(doctorId, filter);
+  const uniquePatientIds = Array.from(
+    new Set(appointments.map((appointment) => appointment.patientId).filter(Boolean))
+  );
+
+  const identityEntries = await Promise.all(
+    uniquePatientIds.map(async (patientId) => {
+      const identity = await fetchPatientIdentity(patientId);
+      return [patientId, identity] as const;
+    })
+  );
+
+  const identityMap = new Map(identityEntries);
+
+  return appointments.map((appointment) => {
+    const identity = identityMap.get(appointment.patientId);
+    const patientName = identity
+      ? [identity.firstName, identity.lastName].filter(Boolean).join(" ").trim()
+      : "";
+
+    return {
+      ...(appointment as any).toObject(),
+      patientName: patientName || undefined,
+      patientEmail: identity?.email || undefined,
+    };
+  });
+};
+
 export const getAppointmentStatusService = async (appointmentId: string) => {
   const appointment = await Appointment.findOne({ appointmentId }).select(
     "appointmentId status updatedAt"
@@ -235,7 +308,7 @@ export const getAppointmentStatusService = async (appointmentId: string) => {
 
 export const getInternalAppointmentPaymentContextService = async (appointmentId: string) => {
   const appointment = await Appointment.findOne({ appointmentId }).select(
-    "appointmentId patientId doctorId appointmentDate status paymentStatus"
+    "appointmentId patientId doctorId appointmentDate status paymentStatus appointmentType consultationFee"
   );
 
   if (!appointment) {
@@ -249,6 +322,8 @@ export const getInternalAppointmentPaymentContextService = async (appointmentId:
     appointmentDate: appointment.appointmentDate,
     status: appointment.status,
     paymentStatus: appointment.paymentStatus,
+    appointmentType: appointment.appointmentType,
+    consultationFee: appointment.consultationFee,
   };
 };
 

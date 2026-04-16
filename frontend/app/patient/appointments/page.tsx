@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarCheck2, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ const getErrorMessage = (error: any, fallback: string) =>
 
 export default function PatientAppointmentsPage() {
   const { user } = useAuth();
+  const router = useRouter();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filters, setFilters] = useState<{ status: AppointmentStatusFilter; date: string }>({
@@ -147,8 +149,11 @@ export default function PatientAppointmentsPage() {
   const handleBookAppointment = async (payload: BookAppointmentPayload) => {
     setBookingSubmitting(true);
     try {
-      await bookAppointment(payload);
+      const createdAppointment = await bookAppointment(payload);
       await fetchAppointments(true);
+      if (createdAppointment?.appointmentId) {
+        router.push(`/patient/payments?appointmentId=${createdAppointment.appointmentId}`);
+      }
     } catch (error: any) {
       toast.error(getErrorMessage(error, 'Failed to book appointment.'));
       throw error;
@@ -216,10 +221,6 @@ export default function PatientAppointmentsPage() {
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Appointments</h1>
-            <p className="text-slate-600">Manage, reschedule, and track all your medical appointments in one place.</p>
-          </div>
           <Button
             type="button"
             className="h-11 rounded-lg bg-blue-600 px-6 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200"

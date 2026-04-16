@@ -14,6 +14,8 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export interface Appointment {
   appointmentId: string;
   patientId: string;
+  patientName?: string;
+  patientEmail?: string;
   doctorId: string;
   appointmentDate: string;
   startTime: string;
@@ -22,6 +24,7 @@ export interface Appointment {
   appointmentType: AppointmentType;
   symptoms?: string;
   consultationNotes?: string;
+  consultationFee: number;
   paymentStatus: PaymentStatus;
   createdAt?: string;
   updatedAt?: string;
