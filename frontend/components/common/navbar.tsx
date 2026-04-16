@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, HeartPulse, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +18,11 @@ import {
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/patient/dashboard')) {
+    return null;
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
@@ -60,7 +66,7 @@ export default function Navbar() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'doctor' ? '/doctor/dashboard' : '/dashboard'} className="cursor-pointer">
+                  <Link href={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard'} className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>

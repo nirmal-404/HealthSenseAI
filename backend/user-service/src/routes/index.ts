@@ -7,10 +7,12 @@ import {
   forgotPasswordController,
   resetPasswordController,
   verifyEmailController,
+  getCurrentUserController,
   getInternalUserByIdController,
   updateInternalUserStatusController,
   changePasswordController,
   deleteAccountController,
+  getDoctorsController,
 } from "../controller/authController";
 import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
@@ -33,6 +35,8 @@ router.post("/reset-password/:token", validate(resetPasswordValidation), resetPa
 router.get("/verify-email/:token", validate(verifyEmailValidation), verifyEmailController);
 
 router.post("/logout", requireAuth, logoutController);
+router.get("/me", requireAuth, getCurrentUserController);
+router.get("/doctors", getDoctorsController);
 router.post("/change-password", requireAuth, changePasswordController);
 router.delete("/delete-account", requireAuth, deleteAccountController);
 

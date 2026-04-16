@@ -25,11 +25,15 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ message: 'Unauthorized: Not logged in' });
   }
 
-  const decodedToken = jwt.verify(token, CONFIG.JWT_SECRET) as JWTPayload;
-  (req as any).user = {
-    id: decodedToken.id,
-    role: decodedToken.role
-  };
+  try {
+    const decodedToken = jwt.verify(token, CONFIG.JWT_SECRET) as JWTPayload;
+    (req as any).user = {
+      id: decodedToken.id,
+      role: decodedToken.role
+    };
+  } catch {
+    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
+  }
 
   return next();
 }
