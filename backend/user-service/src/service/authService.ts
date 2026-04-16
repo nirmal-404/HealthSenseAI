@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError";
 import { signAccessToken, signRefreshToken, getSessionExpiry } from "../utils/tokenHelpers";
 import { CONFIG } from "../config/envConfig";
 import httpStatus from "http-status";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { JWTPayload } from "../types/JWTPayload";
 import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
@@ -58,7 +58,18 @@ export const registerService = async (registerUserDTO: RegisterUserDTO) => {
 export const loginService = async ({ email, password, ipAddress, userAgent }: { email: string, password: string, ipAddress: string, userAgent: string }) => {
   try {
     const user = await User.findOne({ email }).select("+passwordHash");
-    if (!user || !(await user.comparePassword(password))) {
+    if (!user || !user.passwordHash) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid email or password");
+    }
+
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await user.comparePassword(password);
+    } catch {
+      isPasswordValid = false;
+    }
+
+    if (!isPasswordValid) {
       throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
@@ -86,9 +97,18 @@ export const loginService = async ({ email, password, ipAddress, userAgent }: { 
       refreshToken,
       user: {
         id: user._id.toString(),
+        userId: (user as any).userId ? String((user as any).userId) : undefined,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        address: user.address,
         role: user.role,
         isActive: user.isActive,
+        isEmailVerified: user.isEmailVerified,
+        lastLogin: user.lastLogin,
       },
     };
   } catch (error) {
@@ -130,6 +150,10 @@ export const refreshTokenService = async (refreshToken: string) => {
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   } catch (error) {
+    if (error instanceof TokenExpiredError || error instanceof JsonWebTokenError) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+    }
+
     console.error(error);
     if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
@@ -229,6 +253,10 @@ export const validateTokenService = async (token: string) => {
 
     return { user, decoded };
   } catch (error) {
+    if (error instanceof TokenExpiredError || error instanceof JsonWebTokenError) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid or expired token");
+    }
+
     console.error(error);
     if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Server error');
@@ -255,6 +283,36 @@ export const getInternalUserByIdService = async (id: string) => {
       dateOfBirth: user.dateOfBirth,
       gender: user.gender,
       address: user.address,
+    };
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Server error");
+  }
+};
+
+export const getCurrentUserService = async (userId: string) => {
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    return {
+      id: user._id.toString(),
+      userId: (user as any).userId ? String((user as any).userId) : undefined,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      address: user.address,
+      lastLogin: user.lastLogin,
     };
   } catch (error) {
     console.error(error);

@@ -7,6 +7,7 @@ import {
   forgotPasswordController,
   resetPasswordController,
   verifyEmailController,
+  getCurrentUserController,
   getInternalUserByIdController,
   updateInternalUserStatusController,
   changePasswordController,
@@ -33,6 +34,7 @@ router.post("/reset-password/:token", validate(resetPasswordValidation), resetPa
 router.get("/verify-email/:token", validate(verifyEmailValidation), verifyEmailController);
 
 router.post("/logout", requireAuth, logoutController);
+router.get("/me", requireAuth, getCurrentUserController);
 router.post("/change-password", requireAuth, changePasswordController);
 router.delete("/delete-account", requireAuth, deleteAccountController);
 

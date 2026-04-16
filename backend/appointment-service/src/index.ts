@@ -1,9 +1,5 @@
-const dotenv = require("dotenv");
-dotenv.config();
-
 import express from "express";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 const ENV = process.env.ENV || "local";
@@ -16,6 +12,7 @@ import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
 import connectDB from "./config/db";
 import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
+import RabbitMQProducer from "./utils/RabbitMQProducer";
 
 const app = express();
 

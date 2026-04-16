@@ -1,6 +1,7 @@
 import { Response } from "express";
 import {
   forgotPasswordService,
+  getCurrentUserService,
   getInternalUserByIdService,
   loginService,
   logoutService,
@@ -151,6 +152,17 @@ export const getInternalUserByIdController = catchAsync(async (req: XRequest, re
 
   const response: XResponse = {
     message: "User fetched successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const getCurrentUserController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await getCurrentUserService(String(req.user.id));
+
+  const response: XResponse = {
+    message: "Current user fetched successfully",
     data: result,
   };
 

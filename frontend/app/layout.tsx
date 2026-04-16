@@ -6,7 +6,6 @@ import { ToastProvider } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
-import Navbar from "@/components/common/navbar";
 import HealthSenseBot from "@/components/ai/health-sense-bot";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
@@ -30,10 +29,9 @@ export default function RootLayout({
       <head>
         <title>HealthSenseAI</title>
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider>
-            <Navbar />
             {children}
             <HealthSenseBot />
             <Toaster position="top-right" />
