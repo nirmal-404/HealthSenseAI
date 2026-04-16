@@ -1,5 +1,6 @@
 import EmailService from "./EmailService";
 import SMSService from "./SMSService";
+import SocketIOService from "./SocketIOService";
 import { CONFIG } from "../config/envConfig";
 import { AppointmentNotificationPayload, ConsultationCompletedPayload } from "../types";
 
@@ -112,6 +113,10 @@ export const handleAppointmentBooked = async (
       );
       if (doctorSMSResult.success) successCount++;
     }
+
+    // Send real-time push notifications via Socket.IO
+    console.log(`\n📱 Sending real-time notifications via Socket.IO...`);
+    SocketIOService.notifyAppointmentBooked(payload);
 
     console.log(
       `\n✅ Appointment booking notifications completed: ${successCount} sent`
@@ -244,7 +249,9 @@ export const handleConsultationCompleted = async (
       doctorEmailResult.success,
       doctorSMSResult.success,
     ].filter(Boolean).length;
-
+    // Send real-time push notifications via Socket.IO
+    console.log(`\n📱 Sending real-time notifications via Socket.IO...`);
+    SocketIOService.notifyConsultationCompleted(payload);
     console.log(
       `\n✅ Consultation completion notifications completed: ${successCount}/4 sent`
     );
@@ -383,6 +390,10 @@ export const handleAppointmentConfirmed = async (
     } else {
       console.warn(`⚠️  Missing doctor contact info for notifications`);
     }
+
+    // Send real-time push notifications via Socket.IO
+    console.log(`\n📱 Sending real-time notifications via Socket.IO...`);
+    SocketIOService.notifyAppointmentConfirmed(payload);
 
     console.log(
       `\n✅ Appointment confirmation notifications completed: ${successCount} sent`
@@ -523,6 +534,10 @@ export const handleAppointmentRejected = async (
     } else {
       console.warn(`⚠️  Missing doctor contact info for notifications`);
     }
+
+    // Send real-time push notifications via Socket.IO
+    console.log(`\n📱 Sending real-time notifications via Socket.IO...`);
+    SocketIOService.notifyAppointmentRejected(payload);
 
     console.log(
       `\n✅ Appointment rejection notifications completed: ${successCount} sent`

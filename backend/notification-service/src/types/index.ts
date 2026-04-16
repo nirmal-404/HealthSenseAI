@@ -78,7 +78,8 @@ export interface AppointmentNotificationPayload {
   patientPhone: string;
   doctorEmail: string;
   doctorPhone: string;
-  status: "booked" | "confirmed" | "completed" | "cancelled";
+  status: "booked" | "confirmed" | "completed" | "cancelled" | "rejected";
+  notes?: string;
 }
 
 export interface PaymentNotificationPayload {
