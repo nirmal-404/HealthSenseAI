@@ -1,12 +1,19 @@
 import express from "express";
-// import "dotenv/config";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const ENV = process.env.ENV || "local";
+
+if (ENV == "local") {
+  dotenv.config({ path: `.env.${ENV}`, override: true });
+}
+
 import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
 import connectDB from "./config/db";
 import { errorConverter, errorHandler } from "./middlewares/errorMiddleware";
 
-const dotenv = require("dotenv");
-dotenv.config()
 
 const app = express();
 
