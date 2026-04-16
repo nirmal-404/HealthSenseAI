@@ -1,3 +1,188 @@
+import { NextFunction, Request, Response } from "express";
+import { sendSuccess } from "../utils/response";
+import { DoctorService } from "../service/doctorService";
+
+function doctorSvc(req: Request): DoctorService {
+  return (req.app.locals as any).doctorService as DoctorService;
+}
+
+export async function postRegister(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const d = await doctorSvc(req).registerProfile(req.body);
+    return sendSuccess(res, d, "Doctor registered", 201);
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function searchDoctors(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const specialty = String(req.query.specialty);
+    const results = await doctorSvc(req).searchBySpecialty(specialty);
+    return sendSuccess(res, results, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function postAvailability(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  return putAvailability(req, res, next);
+}
+
+export async function getTimeSlots(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const slots = await doctorSvc(req).getTimeSlots(String(req.params.id));
+    return sendSuccess(res, slots, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function blockTimeSlot(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const doctorId = String(req.params.id);
+    const slotId = String(req.params.slotId);
+    const updated = await doctorSvc(req).blockTimeSlot(
+      doctorId,
+      slotId,
+      req.authUser!,
+    );
+    return sendSuccess(res, updated, "Time slot blocked");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getAppointments(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const data = await doctorSvc(req).listAppointments(
+      String(req.params.id),
+      req.authUser!,
+    );
+    return sendSuccess(res, data, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getDoctor(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const d = await doctorSvc(req).getProfile(String(req.params.id));
+    return sendSuccess(res, d, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function putDoctor(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const id = String(req.params.id);
+    const d = await doctorSvc(req).upsertProfile(id, req.body, req.authUser!);
+    return sendSuccess(res, d, "Profile saved");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getAvailability(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const a = await doctorSvc(req).getAvailability(String(req.params.id));
+    return sendSuccess(res, a, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function putAvailability(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const id = String(req.params.id);
+    const d = await doctorSvc(req).setAvailability(
+      id,
+      req.body.weeklySlots,
+      req.body.blockedDates,
+      req.authUser!,
+    );
+    return sendSuccess(res, d, "Availability updated");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function patientReports(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const auth = req.headers.authorization;
+    const data = await doctorSvc(req).patientReports(
+      String(req.params.doctorId),
+      String(req.params.patientId),
+      req.authUser!,
+      auth,
+    );
+    return sendSuccess(res, data, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function respondAppointment(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const out = await doctorSvc(req).respondAppointment(
+      String(req.params.id),
+      req.body.action,
+      req.authUser!,
+    );
+    return sendSuccess(res, out, "Appointment updated");
+  } catch (e) {
+    next(e);
+  }
+}
 import { Response } from "express";
 import httpStatus from "http-status";
 import Doctor from "../models/Doctor";

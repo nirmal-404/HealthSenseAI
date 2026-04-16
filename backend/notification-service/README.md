@@ -2,28 +2,58 @@
 
 ## Overview
 
-The Notification Service is responsible for sending notifications to users via email and SMS. It handles:
+The Notification Service is a microservice that handles all notification delivery for the HealthSenseAI platform. It operates in two modes:
 
-- Appointment confirmations and reminders
-- Payment confirmations
-- Prescription notifications
-- Doctor verification updates
-- SMS and email notifications
-- Notification templates
-- User notification preferences
-- Retry mechanism for failed notifications
+1. **Event-Driven Mode** (Primary): Consumes events from RabbitMQ published by other microservices (Appointment Service, Telemedicine Service)
+2. **Direct API Mode** (Secondary): Accepts manual notification requests via REST endpoints
+
+### Key Features
+
+- **Email Notifications**: Send personalized emails via Gmail SMTP using Nodemailer
+- **SMS Notifications**: Send SMS messages via Twilio API
+- **Event-Driven Architecture**: Automatically trigger notifications on appointment and consultation events
+- **Retry Logic**: Auto-retry failed notifications with exponential backoff
+- **User Preferences**: Respect user notification preferences
+- **Message Queuing**: Uses RabbitMQ for reliable event processing
+- **Template Management**: Customizable email/SMS templates
+- **Status Tracking**: Track all notification delivery attempts
 
 ## Responsibilities
 
 ### Core Functions
 
-1. **Send Notifications**: Send individual or bulk notifications via email or SMS
-2. **Email Management**: Handle email sending using Nodemailer
-3. **SMS Management**: Handle SMS sending using Twilio
-4. **Template Management**: Create and manage notification templates
-5. **Preference Management**: Store and retrieve user notification preferences
+1. **Event Processing**: Listen to appointment and consultation events from RabbitMQ
+2. **Notification Dispatch**: Send email and SMS notifications to patients and doctors
+3. **Email Management**: Handle email sending using Nodemailer with Gmail SMTP
+4. **SMS Management**: Handle SMS sending using Twilio
+5. **Preference Management**: Store and respect user notification preferences
 6. **Retry Logic**: Automatically retry failed notifications
 7. **Status Tracking**: Track notification delivery status
+8. **Error Handling**: Graceful error handling with meaningful logging
+
+## Supported Events
+
+The Notification Service listens for two main events:
+
+### 1. appointment.booked
+**Published by:** Appointment Service  
+**When:** A patient successfully books an appointment  
+**Notifications Sent:**
+- Email to patient (appointment confirmation)
+- SMS to patient (appointment confirmation)
+- Email to doctor (new appointment alert)
+- SMS to doctor (new appointment alert)
+
+### 2. consultation.completed
+**Published by:** Telemedicine Service  
+**When:** A video consultation session ends  
+**Notifications Sent:**
+- Email to patient (consultation completion summary)
+- SMS to patient (consultation completion alert)
+- Email to doctor (session completion confirmation)
+- SMS to doctor (reminder to upload documents)
+
+For detailed event payloads and integration examples, see [RABBITMQ_EVENTS.md](./RABBITMQ_EVENTS.md)
 
 ## Data Models
 
