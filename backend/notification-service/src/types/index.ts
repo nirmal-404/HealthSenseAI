@@ -137,7 +137,7 @@ export interface EmailConfig {
 }
 
 export interface SMSConfig {
-  provider: "twilio" | "sns";
+  provider: "smsapi.lk" | "sns";
   accountSid?: string;
   authToken?: string;
   fromNumber: string;

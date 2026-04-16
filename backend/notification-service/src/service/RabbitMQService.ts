@@ -204,11 +204,14 @@ class RabbitMQService {
   ): Promise<void> {
     try {
       const content = msg.content.toString();
-      const eventData = JSON.parse(content);
+      const message = JSON.parse(content);
 
       console.log(
         `📨 Received event: ${eventType} | MessageID: ${msg.properties.messageId}`
       );
+
+      // Extract the actual event data from the message wrapper
+      const eventData = message.data || message;
 
       // Get the handler for this event type
       const handler = this.eventHandlers.get(eventType);
