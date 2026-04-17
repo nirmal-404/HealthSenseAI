@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, RotateCw } from 'lucide-react';
+import { Loader2, RotateCw, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -40,14 +40,25 @@ export function AppointmentFilters({
   onRefresh,
   refreshing,
 }: AppointmentFiltersProps) {
+  const hasFilters = status !== 'all' || date !== '';
+
   return (
-    <div className="rounded-2xl border border-[#dce5f4] bg-white p-4 shadow-[0_10px_24px_rgba(45,90,180,0.07)]">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Status</p>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-3">
+        {/* Header */}
+        <div className="mb-3 flex items-center gap-2">
+          <Filter className="h-4 w-4 text-slate-600" />
+          <h3 className="text-base font-semibold text-slate-900">Filter Appointments</h3>
+        </div>
+
+        {/* Filters grid */}
+        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+              Status
+            </label>
             <Select value={status} onValueChange={(value) => onStatusChange(value as AppointmentStatusFilter)}>
-              <SelectTrigger className="h-10 w-full rounded-xl border-[#dce5f2] bg-[#f8fbff] text-slate-700">
+              <SelectTrigger className="h-9 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -60,46 +71,54 @@ export function AppointmentFilters({
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Date</p>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+              Appointment Date
+            </label>
             <Input
               type="date"
               value={date}
               onChange={(event) => onDateChange(event.target.value)}
-              className="h-10 rounded-xl border-[#dce5f2] bg-[#f8fbff] text-slate-700"
+              className="h-9 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
           <Button
             type="button"
             onClick={onRefresh}
             variant="outline"
-            className="h-10 rounded-xl border-[#dce5f2] bg-white text-slate-700 hover:bg-[#eef4ff] hover:text-[#2f58db]"
+            size="sm"
+            className="rounded-lg border-slate-300 text-slate-700 hover:bg-white"
             disabled={refreshing}
           >
             {refreshing ? (
               <>
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 Refreshing
               </>
             ) : (
               <>
-                <RotateCw className="mr-1.5 h-4 w-4" />
+                <RotateCw className="mr-1.5 h-3.5 w-3.5" />
                 Refresh
               </>
             )}
           </Button>
 
-          <Button
-            type="button"
-            onClick={onClear}
-            variant="ghost"
-            className="h-10 rounded-xl text-slate-600 hover:bg-[#eef4ff] hover:text-[#2f58db]"
-          >
-            Clear filters
-          </Button>
+          {hasFilters && (
+            <Button
+              type="button"
+              onClick={onClear}
+              variant="ghost"
+              size="sm"
+              className="rounded-lg text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+            >
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Clear filters
+            </Button>
+          )}
         </div>
       </div>
     </div>

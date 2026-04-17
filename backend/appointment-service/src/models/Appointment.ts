@@ -18,6 +18,7 @@ export interface IAppointment extends Document {
   appointmentType: "video" | "in-person";
   symptoms?: string;
   consultationNotes?: string;
+  consultationFee: number;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
 }
 
@@ -70,6 +71,11 @@ const appointmentSchema = new mongoose.Schema<IAppointment>(
       default: "",
       trim: true,
     },
+    consultationFee: {
+      type: Number,
+      required: [true, "consultationFee is required"],
+      min: [0, "consultationFee cannot be negative"],
+    },
     consultationNotes: {
       type: String,
       default: "",
@@ -88,6 +94,25 @@ const appointmentSchema = new mongoose.Schema<IAppointment>(
 
 appointmentSchema.index({ patientId: 1, appointmentDate: -1 });
 appointmentSchema.index({ doctorId: 1, appointmentDate: -1 });
+
+// Unique partial index to prevent duplicate pending appointments with identical details
+// Allows multiple appointments if they differ in any field or if status is not "pending"
+appointmentSchema.index(
+  {
+    patientId: 1,
+    doctorId: 1,
+    appointmentDate: 1,
+    startTime: 1,
+    endTime: 1,
+    appointmentType: 1,
+    status: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: { status: "pending" },
+    sparse: true,
+  }
+);
 
 const Appointment = mongoose.model<IAppointment>("Appointment", appointmentSchema);
 

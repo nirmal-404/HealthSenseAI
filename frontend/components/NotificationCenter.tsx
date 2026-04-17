@@ -40,13 +40,13 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
     }
   };
 
-  const handlePreferenceChange = async (key: keyof typeof preferences, value: boolean) => {
+  const handlePreferenceChange = async (key: string, value: boolean) => {
     if (!preferences) return;
     
     try {
       await updatePreferences({
         [key]: value,
-      });
+      } as any);
       alert('Preference updated successfully');
     } catch (err) {
       alert('Failed to update preference');

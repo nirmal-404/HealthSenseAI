@@ -7,7 +7,7 @@ import {
   confirmAppointmentService,
   getAppointmentService,
   getInternalAppointmentPaymentContextService,
-  getAppointmentsByDoctorService,
+  getAppointmentsByDoctorWithPatientsService,
   getAppointmentsByPatientService,
   getAppointmentStatusService,
   rejectAppointmentService,
@@ -17,6 +17,7 @@ import {
 import { catchAsync } from "../utils/catchAsync";
 import { XRequest } from "../types/XRequest";
 import { XResponse } from "../types/XResponse";
+import { ApiError } from "../utils/ApiError";
 
 export const bookAppointmentController = catchAsync(async (req: XRequest, res: Response) => {
   const result = await bookAppointmentService(req.body, req.user?.id || "system");
@@ -89,6 +90,21 @@ export const confirmAppointmentController = catchAsync(async (req: XRequest, res
   res.status(httpStatus.OK).send(response);
 });
 
+export const approveAppointmentController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await confirmAppointmentService(
+    String(req.params.id),
+    req.user?.id || "system",
+    req.body?.notes
+  );
+
+  const response: XResponse = {
+    message: "Appointment approved successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
 export const rejectAppointmentController = catchAsync(async (req: XRequest, res: Response) => {
   const result = await rejectAppointmentService(
     String(req.params.id),
@@ -127,7 +143,13 @@ export const getAppointmentsByPatientController = catchAsync(async (req: XReques
 });
 
 export const getAppointmentsByDoctorController = catchAsync(async (req: XRequest, res: Response) => {
-  const result = await getAppointmentsByDoctorService(String(req.params.doctorId), {
+  const doctorId = String(req.params.doctorId);
+
+  if (req.user?.role === "doctor" && req.user?.id !== doctorId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden: Access denied");
+  }
+
+  const result = await getAppointmentsByDoctorWithPatientsService(doctorId, {
     status: req.query.status as string | undefined,
     date: req.query.date ? new Date(String(req.query.date)) : undefined,
   });

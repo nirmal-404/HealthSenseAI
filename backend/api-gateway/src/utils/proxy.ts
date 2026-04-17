@@ -7,6 +7,10 @@ const forwardUserHeaders = (proxyReq: any, req: Request) => {
     proxyReq.setHeader("x-user-id", u.user.id);
     proxyReq.setHeader("x-user-role", u.user.role);
   }
+
+  if (req.headers.authorization) {
+    proxyReq.setHeader("authorization", req.headers.authorization);
+  }
 };
 
 const forwardBody = (proxyReq: any, req: any) => {

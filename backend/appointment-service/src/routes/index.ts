@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  approveAppointmentController,
   bookAppointmentController,
   cancelAppointmentController,
   confirmAppointmentPaymentController,
@@ -124,14 +125,20 @@ router.put(
 );
 
 router.put(
+  "/:id/approve",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(decisionValidation),
+  approveAppointmentController
+);
+
+router.put(
   "/:id/reject",
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(decisionValidation),
   rejectAppointmentController
 );
-
-
 
 router.get("/health", (req, res) => {
   res.json({ status: "UP", code: 200 });

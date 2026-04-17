@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import httpStatus from "http-status";
 import {
   createPaymentIntentService,
+  confirmStripePaymentService,
   getPatientPaymentHistoryService,
   getPaymentByIdService,
   getPaymentStatusService,
@@ -57,6 +58,20 @@ export const getPaymentStatusController = catchAsync(async (req: XRequest, res: 
 
   res.status(httpStatus.OK).send(response);
 });
+
+export const confirmStripePaymentController = catchAsync(
+  async (req: XRequest, res: Response) => {
+    const result = await confirmStripePaymentService(String(req.params.paymentId), req.user!);
+
+    const response: XResponse = {
+      success: true,
+      message: "Payment confirmation processed",
+      data: result,
+    };
+
+    res.status(httpStatus.OK).send(response);
+  }
+);
 
 export const getPaymentByIdController = catchAsync(async (req: XRequest, res: Response) => {
   const result = await getPaymentByIdService(String(req.params.id), req.user!);

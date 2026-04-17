@@ -5,7 +5,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { RoleGuard } from '@/components/common/RoleGuard';
 import { useAuth } from '@/hooks/useAuth';
-import { NotificationBell } from '@/components/NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,21 +14,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Bot,
+  Bell,
   CalendarCheck2,
-  Clock3,
   CreditCard,
-  FileText,
-  HeartPulse,
   LayoutDashboard,
   LogOut,
-  Pill,
   Search,
   Stethoscope,
+  Users,
   Video,
 } from 'lucide-react';
 
-type PatientLayoutProps = {
+type DoctorLayoutProps = {
   children: ReactNode;
 };
 
@@ -41,30 +37,26 @@ type SidebarItem = {
 };
 
 const sidebarItems: SidebarItem[] = [
-  { label: 'Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
-  { label: 'Appointments', href: '/patient/appointments', icon: CalendarCheck2 },
-  { label: 'Doctors', href: '/patient/doctors', icon: Stethoscope },
-  { label: 'Medical Records', href: '/patient/medical-records', icon: FileText },
-  { label: 'Prescriptions', href: '/patient/prescriptions', icon: Pill },
-  { label: 'Payments', href: '/patient/payments', icon: CreditCard },
-  { label: 'HealthSense AI', href: '/patient/ai-assistance', icon: Bot },
-  { label: 'Telemedicine', href: '/patient/telemedicine', icon: Video },
+  { label: 'Dashboard', href: '/doctor/dashboard', icon: LayoutDashboard },
+  { label: 'Appointments', href: '/doctor/appointments', icon: CalendarCheck2 },
+  { label: 'Patients', href: '/doctor/patients', icon: Users },
+  { label: 'Payments', href: '/doctor/payments', icon: CreditCard },
+  { label: 'Telemedicine', href: '/doctor/telemedicine', icon: Video },
+  { label: 'Notifications', href: '/doctor/notifications', icon: Bell },
 ];
 
 const pageTitles: Record<string, string> = {
-  '/patient/dashboard': 'Dashboard',
-  '/patient/appointments': 'Appointments',
-  '/patient/doctors': 'Doctors',
-  '/patient/medical-records': 'Medical Records',
-  '/patient/prescriptions': 'Prescriptions',
-  '/patient/payments': 'Payments',
-  '/patient/ai-assistance': 'AI Assistance',
-  '/patient/telemedicine': 'Telemedicine',
+  '/doctor/dashboard': 'Dashboard',
+  '/doctor/appointments': 'Appointments',
+  '/doctor/patients': 'Patients',
+  '/doctor/payments': 'Payments',
+  '/doctor/telemedicine': 'Telemedicine',
+  '/doctor/notifications': 'Notifications',
 };
 
 function initials(firstName?: string, lastName?: string) {
-  const first = firstName?.[0] ?? 'P';
-  const last = lastName?.[0] ?? 'T';
+  const first = firstName?.[0] ?? 'D';
+  const last = lastName?.[0] ?? 'R';
   return `${first}${last}`.toUpperCase();
 }
 
@@ -86,7 +78,7 @@ function getPageTitle(pathname: string) {
   return matchedPath ? pageTitles[matchedPath] : 'Dashboard';
 }
 
-export default function PatientLayout({ children }: PatientLayoutProps) {
+export default function DoctorLayout({ children }: DoctorLayoutProps) {
   const pathname = usePathname();
   const { user, logout, refreshUser } = useAuth();
   const [currentDateTime, setCurrentDateTime] = useState(() => new Date());
@@ -107,7 +99,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
   const firstName = user?.firstName?.trim() ?? '';
   const lastName = user?.lastName?.trim() ?? '';
-  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Patient User';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Doctor User';
   const profileStatus = user?.isEmailVerified ? 'Email Verified' : 'Verification Pending';
   const formattedLastLogin = formatLastLogin(user?.lastLogin);
   const pageTitle = getPageTitle(pathname);
@@ -126,17 +118,17 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const isActiveItem = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <RoleGuard allowedRoles={['patient']}>
+    <RoleGuard allowedRoles={['doctor']}>
       <main className="h-screen overflow-hidden bg-[#eff4fc] p-2 md:p-4 lg:p-6">
         <div className="mx-auto flex h-full w-full max-w-[1600px] overflow-hidden rounded-[28px] border border-[#dce5f4] bg-[#f8fbff] shadow-[0_24px_70px_rgba(45,90,180,0.14)]">
           <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-[#e6edf8] bg-[#f9fbff] px-4 py-5 lg:flex">
             <div className="mb-6 flex items-center gap-2">
               <div className="rounded-xl bg-[#3363ea] p-2 text-white shadow-sm shadow-blue-200">
-                <HeartPulse className="h-5 w-5" />
+                <Stethoscope className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xl font-semibold text-[#1f2a44]">HealthSenseAI</p>
-                <p className="text-xs text-slate-400">Patient Workspace</p>
+                <p className="text-xs text-slate-400">Doctor Workspace</p>
               </div>
             </div>
 
@@ -185,7 +177,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             </div>
           </aside>
 
-          <section className="flex h-full flex-1 flex-col overflow-hidden">
+          <section className="h-full flex-1 overflow-y-auto">
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6edf8] bg-white px-4 py-4 md:px-6 lg:px-8">
               <div>
                 <h1 className="text-xl font-semibold text-[#1d2944]">{pageTitle}</h1>
@@ -201,7 +193,12 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                   />
                 </label>
 
-                <NotificationBell userId={user?.id} />
+                <button
+                  aria-label="Notifications"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#dce5f2] bg-white text-slate-500"
+                >
+                  <Bell className="h-4 w-4" />
+                </button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -289,9 +286,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {children}
-            </div>
+            {children}
           </section>
         </div>
       </main>

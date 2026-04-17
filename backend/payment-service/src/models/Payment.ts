@@ -21,6 +21,8 @@ export interface IPayment extends Document {
   status: PaymentStatus;
   failureReason?: string;
   refundReason?: string;
+  doctorFirstName?: string;
+  doctorLastName?: string;
   initiatedAt: Date;
   completedAt?: Date;
   createdAt?: Date;
@@ -57,6 +59,16 @@ const paymentSchema = new mongoose.Schema<IPayment>(
       required: [true, "doctorId is required"],
       trim: true,
       index: true,
+    },
+    doctorFirstName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    doctorLastName: {
+      type: String,
+      default: "",
+      trim: true,
     },
     amount: {
       type: Number,
@@ -115,6 +127,16 @@ const paymentSchema = new mongoose.Schema<IPayment>(
 paymentSchema.index({ patientId: 1, initiatedAt: -1 });
 paymentSchema.index({ appointmentId: 1, status: 1 });
 paymentSchema.index({ stripePaymentIntentId: 1 }, { unique: true, sparse: true });
+
+// Compound index to prevent duplicate pending payments for same appointment
+paymentSchema.index(
+  { appointmentId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "pending" },
+    sparse: true,
+  }
+);
 
 const Payment = mongoose.model<IPayment>("Payment", paymentSchema);
 

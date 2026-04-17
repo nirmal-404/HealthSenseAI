@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,7 @@ import type {
   DoctorOption,
 } from '@/lib/appointments.types';
 import { isPastDate, isValidTimeRange } from '@/lib/appointments.utils';
+import { getConsultationFee, formatFeeAsCurrency } from '@/lib/appointmentPricing';
 
 type BookAppointmentDialogProps = {
   open: boolean;
@@ -84,6 +85,11 @@ export function BookAppointmentDialog({
   const selectedDoctorLabel = useMemo(
     () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId)?.name,
     [doctorOptions, selectedDoctorId]
+  );
+
+  const consultationFee = useMemo(
+    () => getConsultationFee(appointmentType),
+    [appointmentType]
   );
 
   const resetForm = () => {
@@ -154,68 +160,44 @@ export function BookAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] w-[min(96vw,920px)] overflow-y-auto rounded-3xl border border-[#dce5f2] bg-white p-0 shadow-[0_18px_42px_rgba(26,53,120,0.18)] sm:max-w-[920px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-[#e6edf8] bg-gradient-to-r from-[#f3f7ff] to-white px-6 py-5">
-            <DialogTitle className="text-xl font-semibold text-[#1f2a44]">Book Appointment</DialogTitle>
-            <DialogDescription className="max-w-2xl text-sm text-slate-500">
-              Create a new appointment request with date, time, and consultation type.
-            </DialogDescription>
+      <DialogContent className="max-h-[95vh] w-[min(96vw,750px)] rounded-lg border border-slate-200 bg-white p-0 shadow-lg sm:max-w-[750px] flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+          {/* Header */}
+          <DialogHeader className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-5 py-3 flex-shrink-0">
+            <DialogTitle className="text-xl font-bold text-slate-900">Book an Appointment</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 px-6 py-5 xl:grid-cols-[1.12fr_1fr]">
-            <div className="space-y-3 rounded-2xl border border-[#dce7fb] bg-[#f8fbff] p-4">
-              <Label htmlFor="doctor-search" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Find doctor (live)
-              </Label>
-
-              <div className="flex gap-2">
+          {/* Content - scrollable */}
+          <div className="space-y-3 px-5 py-4 overflow-y-auto flex-1">
+            {/* Doctor Selection Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-slate-900 uppercase">Doctor</h3>
+              
+              <div className="flex gap-1.5">
                 <Input
                   id="doctor-search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search by doctor name"
-                  className="h-10 rounded-xl border-[#cfdcf5] bg-white"
+                  placeholder="Search doctors..."
+                  className="flex-1 h-8 text-xs rounded-lg border-slate-300 bg-white"
                 />
                 <Button
                   type="button"
                   onClick={() => void handleSearchDoctors()}
                   variant="outline"
-                  className="h-10 rounded-xl border-[#cfdcf5] bg-white"
+                  className="h-8 px-2 rounded-lg border-slate-300 hover:bg-blue-50"
                   disabled={doctorLoading}
                 >
-                  {doctorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  {doctorLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Search className="h-3 w-3" />
+                  )}
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">
-                  {doctorOptions.length ? `${doctorOptions.length} doctors available` : 'No doctors loaded yet'}
-                </span>
-                <span className="text-[#3559d5]">Source: user records</span>
-              </div>
-
-              <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
-                <SelectTrigger className="h-10 w-full rounded-xl border-[#cfdcf5] bg-white text-slate-700">
-                  <SelectValue placeholder="Select doctor from results" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctorOptions.length ? (
-                    doctorOptions.map((doctor) => (
-                      <SelectItem key={doctor.id} value={doctor.id}>
-                        {doctor.name}
-                        {doctor.specialization ? ` • ${doctor.specialization}` : ''}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="__no_results" disabled>
-                      No doctors found
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-
-              <div className="max-h-52 space-y-2 overflow-auto rounded-xl border border-[#dce7fb] bg-white p-2">
+              {/* Doctor list */}
+              <div className="max-h-32 space-y-1 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
                 {doctorOptions.length ? (
                   doctorOptions.map((doctor) => {
                     const active = selectedDoctorId === doctor.id;
@@ -223,129 +205,163 @@ export function BookAppointmentDialog({
                       <button
                         key={doctor.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedDoctorId(doctor.id);
-                        }}
-                        className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                        onClick={() => setSelectedDoctorId(doctor.id)}
+                        className={`w-full rounded-lg border-2 px-3 py-1.5 text-left transition text-xs ${
                           active
-                            ? 'border-[#3559d5] bg-[#eef3ff] text-[#1f2a44]'
-                            : 'border-[#e6edf8] bg-white text-slate-700 hover:border-[#c8d8f8] hover:bg-[#f7faff]'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50'
                         }`}
                       >
-                        <p className="text-sm font-medium">{doctor.name}</p>
-                        {doctor.email ? <p className="text-xs text-slate-500">{doctor.email}</p> : null}
+                        <p className="font-semibold text-slate-900 text-xs">{doctor.name}</p>
+                        {doctor.specialization ? (
+                          <p className="text-xs text-slate-600">{doctor.specialization}</p>
+                        ) : null}
                       </button>
                     );
                   })
                 ) : (
-                  <p className="rounded-lg border border-dashed border-[#dce7fb] bg-[#fbfdff] px-3 py-5 text-center text-xs text-slate-500">
-                    Search doctors to populate this list.
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-100 px-2 py-3 text-center text-xs text-slate-600">
+                    Search for doctors
                   </p>
                 )}
               </div>
 
               {selectedDoctorLabel ? (
-                <p className="text-xs text-emerald-600">Selected: {selectedDoctorLabel}</p>
+                <p className="text-xs font-medium text-emerald-600">✓ {selectedDoctorLabel}</p>
               ) : null}
-              {doctorError ? <p className="text-xs text-amber-600">{doctorError}</p> : null}
+              {doctorError ? (
+                <p className="text-xs text-rose-600">⚠ {doctorError}</p>
+              ) : null}
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-[#dce7fb] bg-white p-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="appointment-date" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Date
-                </Label>
-                <Input
-                  id="appointment-date"
-                  type="date"
-                  value={appointmentDate}
-                  onChange={(event) => setAppointmentDate(event.target.value)}
-                  className="h-10 rounded-xl border-[#cfdcf5] bg-[#f9fbff]"
-                  required
-                />
+            {/* Appointment Details Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-slate-900 uppercase">Appointment Details</h3>
+              
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="appointment-date" className="text-xs font-semibold text-slate-700">
+                    Date
+                  </Label>
+                  <Input
+                    id="appointment-date"
+                    type="date"
+                    value={appointmentDate}
+                    onChange={(event) => setAppointmentDate(event.target.value)}
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-700">Type</Label>
+                  <Select
+                    value={appointmentType}
+                    onValueChange={(value) => setAppointmentType(value as AppointmentType)}
+                  >
+                    <SelectTrigger className="h-8 text-xs rounded-lg border-slate-300 bg-white text-slate-900">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="video">Video</SelectItem>
+                      <SelectItem value="in-person">In-Person</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Consultation type</Label>
-                <Select value={appointmentType} onValueChange={(value) => setAppointmentType(value as AppointmentType)}>
-                  <SelectTrigger className="h-10 w-full rounded-xl border-[#cfdcf5] bg-[#f9fbff] text-slate-700">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="video">Video consultation</SelectItem>
-                    <SelectItem value="in-person">In-person visit</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Consultation Fee Display */}
+              <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div>
+                      <p className="text-xs font-semibold text-blue-700">Fee</p>
+                      <p className="text-xs text-blue-600">
+                        {appointmentType === 'video' ? 'Video' : 'In-Person'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-blue-700">{formatFeeAsCurrency(consultationFee)}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="start-time" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Start time
+
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="start-time" className="text-xs font-semibold text-slate-700">
+                    Start
                   </Label>
                   <Input
                     id="start-time"
                     type="time"
                     value={startTime}
                     onChange={(event) => setStartTime(event.target.value)}
-                    className="h-10 rounded-xl border-[#cfdcf5] bg-[#f9fbff]"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
                     required
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="end-time" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    End time
+                <div className="space-y-1">
+                  <Label htmlFor="end-time" className="text-xs font-semibold text-slate-700">
+                    End
                   </Label>
                   <Input
                     id="end-time"
                     type="time"
                     value={endTime}
                     onChange={(event) => setEndTime(event.target.value)}
-                    className="h-10 rounded-xl border-[#cfdcf5] bg-[#f9fbff]"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
                     required
                   />
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2 px-6 pb-5">
-            <Label htmlFor="symptoms" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Symptoms / reason
-            </Label>
-            <Textarea
-              id="symptoms"
-              value={symptoms}
-              onChange={(event) => setSymptoms(event.target.value)}
-              placeholder="Describe symptoms or consultation reason"
-              className="min-h-[92px] rounded-xl border-[#cfdcf5] bg-[#f9fbff]"
-            />
+            {/* Chief Complaint Section */}
+            <div className="space-y-1">
+              <Label htmlFor="symptoms" className="text-xs font-semibold text-slate-700 uppercase">
+                Reason for Visit
+              </Label>
+              <Textarea
+                id="symptoms"
+                value={symptoms}
+                onChange={(event) => setSymptoms(event.target.value)}
+                placeholder="Describe symptoms or reason..."
+                className="min-h-16 text-xs rounded-lg border-slate-300 bg-white resize-none"
+              />
+            </div>
 
+            {/* Validation Error */}
             {validationError ? (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                {validationError}
-              </p>
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <p className="font-semibold mb-0.5">Unable to book</p>
+                <p>{validationError}</p>
+              </div>
             ) : null}
           </div>
 
-          <DialogFooter className="sticky bottom-0 rounded-b-3xl border-t border-[#e6edf8] bg-[#f8fbff] px-6 py-4 sm:justify-end">
+          {/* Footer */}
+          <DialogFooter className="border-t border-slate-200 bg-slate-50 px-5 py-3 sm:justify-end gap-2 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
-              className="rounded-xl border-[#dce5f2]"
+              className="rounded-lg border-slate-300 text-xs hover:bg-slate-100 h-8 px-3"
               onClick={() => handleClose(false)}
               disabled={submitting}
             >
               Cancel
             </Button>
-            <Button type="submit" className="rounded-xl bg-[#3559d5] text-white hover:bg-[#2d4db9]" disabled={submitting}>
+            <Button
+              type="submit"
+              className="rounded-lg bg-blue-600 text-white text-xs hover:bg-blue-700 disabled:bg-blue-400 h-8 px-4"
+              disabled={submitting}
+            >
               {submitting ? (
                 <>
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
                   Booking...
                 </>
               ) : (
-                'Book appointment'
+                'Book'
               )}
             </Button>
           </DialogFooter>

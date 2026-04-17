@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarCheck2, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ const getErrorMessage = (error: any, fallback: string) =>
 
 export default function PatientAppointmentsPage() {
   const { user } = useAuth();
+  const router = useRouter();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filters, setFilters] = useState<{ status: AppointmentStatusFilter; date: string }>({
@@ -147,8 +149,11 @@ export default function PatientAppointmentsPage() {
   const handleBookAppointment = async (payload: BookAppointmentPayload) => {
     setBookingSubmitting(true);
     try {
-      await bookAppointment(payload);
+      const createdAppointment = await bookAppointment(payload);
       await fetchAppointments(true);
+      if (createdAppointment?.appointmentId) {
+        router.push(`/patient/payments?appointmentId=${createdAppointment.appointmentId}`);
+      }
     } catch (error: any) {
       toast.error(getErrorMessage(error, 'Failed to book appointment.'));
       throw error;
@@ -212,113 +217,137 @@ export default function PatientAppointmentsPage() {
   };
 
   return (
-    <div className="space-y-5 p-4 md:p-6 lg:p-8">
-      <Card className="border border-[#dce5f4] bg-white py-0 shadow-[0_10px_24px_rgba(45,90,180,0.07)]">
-        <CardHeader className="border-b border-[#e6edf8] pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-xl text-[#1f2a44]">Manage Appointments</CardTitle>
-              <CardDescription className="text-sm text-slate-500">
-                Book, reschedule, cancel, and review your appointment history.
-              </CardDescription>
-            </div>
+    <div className="space-y-4 p-3 md:p-4 lg:p-5">
+      {/* Header Section */}
+      <div className="mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <Button
+            type="button"
+            className="h-10 rounded-lg bg-blue-600 px-5 text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow"
+            onClick={() => setBookDialogOpen(true)}
+            disabled={!user?.id}
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Book New Appointment
+          </Button>
+        </div>
+      </div>
 
-            <Button
-              type="button"
-              className="h-10 rounded-xl bg-[#3559d5] text-white hover:bg-[#2d4db9]"
-              onClick={() => setBookDialogOpen(true)}
-              disabled={!user?.id}
+      {/* Filters */}
+      <AppointmentFilters
+        status={filters.status}
+        date={filters.date}
+        onStatusChange={handleStatusChange}
+        onDateChange={handleDateChange}
+        onClear={handleClearFilters}
+        onRefresh={() => void fetchAppointments(true)}
+        refreshing={refreshing}
+      />
+
+      {/* Appointments List */}
+      {loadingList ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={`appointment-skeleton-${index}`}
+              className="animate-pulse rounded-lg border border-slate-200 bg-white p-4"
             >
-              <Plus className="mr-1.5 h-4 w-4" /> Book appointment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4 p-4">
-          <AppointmentFilters
-            status={filters.status}
-            date={filters.date}
-            onStatusChange={handleStatusChange}
-            onDateChange={handleDateChange}
-            onClear={handleClearFilters}
-            onRefresh={() => void fetchAppointments(true)}
-            refreshing={refreshing}
-          />
-
-          {loadingList ? (
-            <div className="grid gap-4 xl:grid-cols-2">
-              {[0, 1, 2].map((index) => (
-                <Card
-                  key={`appointment-skeleton-${index}`}
-                  className="border border-[#dce5f4] bg-white py-0"
-                >
-                  <CardContent className="space-y-3 p-4">
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-4 w-64" />
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : appointments.length === 0 ? (
-            <Card className="border border-dashed border-[#cfdcf4] bg-[#fbfdff] py-0 shadow-none">
-              <CardContent className="flex flex-col items-center gap-2 p-8 text-center">
-                <div className="rounded-xl bg-[#edf2ff] p-2.5 text-[#3559d5]">
-                  <CalendarCheck2 className="h-5 w-5" />
-                </div>
-                <p className="text-base font-semibold text-[#1f2a44]">No appointments found</p>
-                <p className="max-w-md text-sm text-slate-500">
-                  Try adjusting filters or create your first appointment request.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid gap-4 xl:grid-cols-2">
-                {paginatedAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.appointmentId}
-                    appointment={appointment}
-                    doctorLabel={doctorLabelMap.get(appointment.doctorId)}
-                    actionLoading={actionLoadingById[appointment.appointmentId] || null}
-                    onReschedule={setRescheduleTarget}
-                    onCancel={setCancelTarget}
-                  />
-                ))}
+              <div className="space-y-3">
+                <div className="h-5 w-36 bg-slate-200 rounded" />
+                <div className="h-4 w-full bg-slate-100 rounded" />
+                <div className="h-16 w-full bg-slate-100 rounded" />
+                <div className="h-8 w-full bg-slate-100 rounded" />
               </div>
+            </div>
+          ))}
+        </div>
+      ) : appointments.length === 0 ? (
+        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 p-8 text-center">
+          <div className="mb-3 flex justify-center">
+            <div className="rounded-full bg-blue-100 p-3">
+              <CalendarCheck2 className="h-7 w-7 text-blue-600" />
+            </div>
+          </div>
+          <h3 className="mb-1 text-lg font-semibold text-slate-900">No Appointments Found</h3>
+          <p className="mx-auto mb-5 max-w-md text-slate-600">
+            You don't have any appointments yet. Start by booking your first appointment with a healthcare provider.
+          </p>
+          <Button
+            type="button"
+            className="h-9 rounded-lg bg-blue-600 px-5 text-white hover:bg-blue-700"
+            onClick={() => setBookDialogOpen(true)}
+            disabled={!user?.id}
+          >
+            Book Your First Appointment
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            {paginatedAppointments.map((appointment) => (
+              <AppointmentCard
+                key={appointment.appointmentId}
+                appointment={appointment}
+                doctorLabel={doctorLabelMap.get(appointment.doctorId)}
+                actionLoading={actionLoadingById[appointment.appointmentId] || null}
+                onReschedule={setRescheduleTarget}
+                onCancel={setCancelTarget}
+              />
+            ))}
+          </div>
 
-              {totalPages > 1 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#dce5f2] bg-[#f8fbff] p-3">
-                  <p className="text-xs text-slate-500">
-                    Page {currentPage} of {totalPages}
-                  </p>
-                  <div className="flex items-center gap-2">
+          {/* Pagination */}
+          {totalPages > 1 ? (
+            <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm text-slate-600">
+                Showing <span className="font-semibold text-slate-900">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+                <span className="font-semibold text-slate-900">
+                  {Math.min(currentPage * PAGE_SIZE, appointments.length)}
+                </span>{' '}
+                of <span className="font-semibold text-slate-900">{appointments.length}</span> appointments
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     <Button
+                      key={pageNum}
                       type="button"
-                      variant="outline"
-                      className="rounded-xl border-[#dce5f2]"
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      disabled={currentPage <= 1}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 w-8 rounded-lg p-0"
+                      onClick={() => setCurrentPage(pageNum)}
                     >
-                      Previous
+                      {pageNum}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-xl border-[#dce5f2]"
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage >= totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ) : null}
-            </>
-          )}
-        </CardContent>
-      </Card>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
 
+      {/* Dialogs */}
       <BookAppointmentDialog
         open={bookDialogOpen}
         onOpenChange={setBookDialogOpen}
@@ -356,9 +385,12 @@ export default function PatientAppointmentsPage() {
       />
 
       {!loadingList && !refreshing && !user?.id ? (
-        <p className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          <Loader2 className="h-3.5 w-3.5" /> Unable to detect patient session. Please sign in again.
-        </p>
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <Loader2 className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            <span className="font-semibold">Session Lost:</span> Unable to detect patient session. Please sign in again to manage your appointments.
+          </p>
+        </div>
       ) : null}
     </div>
   );

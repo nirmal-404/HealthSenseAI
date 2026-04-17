@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  confirmStripePaymentController,
   createPaymentIntentController,
   getPatientPaymentHistoryController,
   getPaymentByIdController,
@@ -35,6 +36,14 @@ router.post(
   allowRoles("patient", "admin"),
   validate(processPaymentValidation),
   processAppointmentPaymentController
+);
+
+router.post(
+  "/:paymentId/confirm",
+  requireAuth,
+  allowRoles("patient", "admin"),
+  validate(paymentIdValidation),
+  confirmStripePaymentController
 );
 
 router.get(
