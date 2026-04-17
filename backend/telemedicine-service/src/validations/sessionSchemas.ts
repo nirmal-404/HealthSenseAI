@@ -3,7 +3,14 @@ import { z } from "zod";
 export const createSessionBodySchema = z.object({
   doctorId: z.string().min(1),
   patientId: z.string().min(1),
-  appointmentId: z.string().optional(),
+  appointmentId: z.string().min(1),
+  appointmentType: z.literal("video"),
+  appointmentDate: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  consultationFee: z.number().nonnegative().optional(),
+  doctorName: z.string().min(1).optional(),
+  patientName: z.string().min(1).optional(),
 });
 
 export const endSessionBodySchema = z.object({
@@ -30,4 +37,8 @@ export const sessionIdParamSchema = z.object({
 
 export const doctorIdParamSchema = z.object({
   doctorId: z.string().min(1),
+});
+
+export const patientIdParamSchema = z.object({
+  patientId: z.string().min(1),
 });

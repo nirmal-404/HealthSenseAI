@@ -13,6 +13,13 @@ export type SoapNote = {
 export interface ISession extends mongoose.Document {
   sessionId: string;
   appointmentId?: string;
+  appointmentType?: "video" | "in-person";
+  appointmentDate?: Date;
+  startTime?: string;
+  endTime?: string;
+  consultationFee?: number;
+  doctorName?: string;
+  patientName?: string;
   doctorId: string;
   patientId: string;
   roomName: string;
@@ -48,7 +55,14 @@ const soapSchema = new Schema(
 const sessionSchema = new Schema<ISession>(
   {
     sessionId: { type: String, required: true, unique: true, index: true },
-    appointmentId: { type: String },
+    appointmentId: { type: String, index: true, unique: true, sparse: true },
+    appointmentType: { type: String, enum: ["video", "in-person"] },
+    appointmentDate: { type: Date },
+    startTime: { type: String },
+    endTime: { type: String },
+    consultationFee: { type: Number },
+    doctorName: { type: String },
+    patientName: { type: String },
     doctorId: { type: String, required: true, index: true },
     patientId: { type: String, required: true, index: true },
     roomName: { type: String, required: true },

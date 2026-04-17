@@ -148,3 +148,25 @@ export async function listDoctorSessions(
     next(e);
   }
 }
+
+export async function listPatientSessions(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const q = req.query as unknown as { page: number; limit: number };
+    const page = q.page;
+    const limit = q.limit;
+    const patientId = String(req.params.patientId);
+    const { items, total } = await svc(req).listForPatient(
+      patientId,
+      page,
+      limit,
+      req.authUser!,
+    );
+    return sendSuccess(res, { items, page, limit, total }, "OK");
+  } catch (e) {
+    next(e);
+  }
+}

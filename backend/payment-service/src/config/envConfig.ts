@@ -41,7 +41,7 @@ export const CONFIG: ConfigType = {
   PAYMENT_SERVICE_URL:
     process.env.PAYMENT_SERVICE_URL || "http://localhost:5007",
   TELEMEDICINE_SERVICE_URL:
-    process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5008",
+    process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:50008",
   USER_SERVICE_URL:
     process.env.USER_SERVICE_URL || "http://localhost:5009",
 };

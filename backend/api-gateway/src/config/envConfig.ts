@@ -8,6 +8,6 @@ export const CONFIG = {
   NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:5005",
   PATIENT_MANAGEMENT_SERVICE_URL: process.env.PATIENT_MANAGEMENT_SERVICE_URL || "http://localhost:5006",
   PAYMENT_SERVICE_URL: process.env.PAYMENT_SERVICE_URL || "http://localhost:5007",
-  TELEMEDICINE_SERVICE_URL: process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5008",
+  TELEMEDICINE_SERVICE_URL: process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:50008",
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || "http://localhost:5009",
 };
