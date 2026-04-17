@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { sendSuccess } from "../utils/response";
 import { DoctorService } from "../service/doctorService";
+import httpStatus from "http-status";
 
 function doctorSvc(req: Request): DoctorService {
   return (req.app.locals as any).doctorService as DoctorService;
@@ -12,6 +13,14 @@ export async function postRegister(
   next: NextFunction,
 ) {
   try {
+    // Validate passwords match if password is provided
+    if (req.body.password && req.body.confirmPassword && req.body.password !== req.body.confirmPassword) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        success: false,
+        message: "Passwords do not match",
+      });
+    }
+    
     const d = await doctorSvc(req).registerProfile(req.body);
     return sendSuccess(res, d, "Doctor registered", 201);
   } catch (e) {

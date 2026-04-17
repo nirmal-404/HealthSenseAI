@@ -18,8 +18,9 @@ export const registerDoctorValidation = {
     dateOfBirth: Joi.date(),
     gender: Joi.string().valid("male", "female", "other"),
     password: Joi.string().min(8),
+    confirmPassword: Joi.string().min(8),
     address: Joi.string().allow(""),
-  }),
+  }).with('password', 'confirmPassword').unknown(true),
 };
 
 export const updateDoctorProfileValidation = {

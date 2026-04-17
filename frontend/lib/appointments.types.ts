@@ -37,7 +37,12 @@ export interface AppointmentFilterQuery {
 
 export interface BookAppointmentPayload {
   patientId: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhone?: string;
   doctorId: string;
+  doctorName: string;
+  doctorEmail?: string;
   appointmentDate: string;
   startTime: string;
   endTime: string;

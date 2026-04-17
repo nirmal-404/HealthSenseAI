@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Search, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -62,6 +63,7 @@ export function BookAppointmentDialog({
   onDoctorSearch,
   onSubmit,
 }: BookAppointmentDialogProps) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState(getNextDay());
@@ -84,6 +86,11 @@ export function BookAppointmentDialog({
 
   const selectedDoctorLabel = useMemo(
     () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId)?.name,
+    [doctorOptions, selectedDoctorId]
+  );
+
+  const selectedDoctor = useMemo(
+    () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId),
     [doctorOptions, selectedDoctorId]
   );
 
@@ -141,9 +148,19 @@ export function BookAppointmentDialog({
     setValidationError(null);
 
     try {
+      // Get patient name from first and last name
+      const patientName = user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : 'Patient';
+
       await onSubmit({
         patientId,
+        patientName,
+        patientEmail: user?.email || '',
+        patientPhone: user?.phoneNumber,
         doctorId,
+        doctorName: selectedDoctor?.name || 'Doctor',
+        doctorEmail: selectedDoctor?.email,
         appointmentDate,
         startTime,
         endTime,
@@ -179,7 +196,7 @@ export function BookAppointmentDialog({
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Search doctors..."
-                  className="flex-1 h-8 text-xs rounded-lg border-slate-300 bg-white"
+                  className="flex-1 h-8 text-xs rounded-lg border-slate-300 bg-white text-black"
                 />
                 <Button
                   type="button"
@@ -248,7 +265,7 @@ export function BookAppointmentDialog({
                     type="date"
                     value={appointmentDate}
                     onChange={(event) => setAppointmentDate(event.target.value)}
-                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white text-black"
                     required
                   />
                 </div>
@@ -295,7 +312,7 @@ export function BookAppointmentDialog({
                     type="time"
                     value={startTime}
                     onChange={(event) => setStartTime(event.target.value)}
-                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white text-black"
                     required
                   />
                 </div>
@@ -309,7 +326,7 @@ export function BookAppointmentDialog({
                     type="time"
                     value={endTime}
                     onChange={(event) => setEndTime(event.target.value)}
-                    className="h-8 text-xs rounded-lg border-slate-300 bg-white"
+                    className="h-8 text-xs rounded-lg border-slate-300 bg-white text-black"
                     required
                   />
                 </div>
@@ -326,7 +343,7 @@ export function BookAppointmentDialog({
                 value={symptoms}
                 onChange={(event) => setSymptoms(event.target.value)}
                 placeholder="Describe symptoms or reason..."
-                className="min-h-16 text-xs rounded-lg border-slate-300 bg-white resize-none"
+                className="min-h-16 text-xs rounded-lg border-slate-300 bg-white text-black resize-none"
               />
             </div>
 

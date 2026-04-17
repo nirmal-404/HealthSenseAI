@@ -64,7 +64,7 @@ export const useNotifications = (userId?: string) => {
       setLoading(true);
       setError(null);
       const response = await axiosInstance.get(
-        `/api/notifications/user/${userId}?limit=${limit}&offset=${offset}`
+        `/notifications/user/${userId}?limit=${limit}&offset=${offset}`
       );
       
       if (response.data.success) {
@@ -85,7 +85,7 @@ export const useNotifications = (userId?: string) => {
   const getNotification = useCallback(async (notificationId: string) => {
     try {
       const response = await axiosInstance.get(
-        `/api/notifications/${notificationId}`
+        `/notifications/${notificationId}`
       );
       
       if (response.data.success) {
@@ -111,7 +111,7 @@ export const useNotifications = (userId?: string) => {
   }) => {
     try {
       setError(null);
-      const response = await axiosInstance.post(`/api/notifications/send`, payload);
+      const response = await axiosInstance.post(`/notifications/send`, payload);
       
       if (response.data.success) {
         return response.data.data;
@@ -137,7 +137,7 @@ export const useNotifications = (userId?: string) => {
     try {
       setError(null);
       const response = await axiosInstance.post(
-        `/api/notifications/send-bulk`,
+        `/notifications/send-bulk`,
         payload
       );
       
@@ -158,7 +158,7 @@ export const useNotifications = (userId?: string) => {
   const fetchStats = useCallback(async () => {
     try {
       setError(null);
-      const response = await axiosInstance.get(`/api/notifications/stats`);
+      const response = await axiosInstance.get(`/notifications/stats`);
       
       if (response.data.success) {
         setStats(response.data.data?.stats || null);
@@ -210,7 +210,7 @@ export const useNotifications = (userId?: string) => {
     try {
       setError(null);
       const response = await axiosInstance.get(
-        `/api/notifications/preferences/${userId}`
+        `/notifications/preferences/${userId}`
       );
       
       if (response.data.success) {
@@ -229,7 +229,7 @@ export const useNotifications = (userId?: string) => {
   const retryFailedNotifications = useCallback(async () => {
     try {
       setError(null);
-      const response = await axiosInstance.post(`/api/notifications/retry-failed`, {});
+      const response = await axiosInstance.post(`/notifications/retry-failed`, {});
       
       if (response.data.success) {
         return response.data.data;

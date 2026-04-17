@@ -211,6 +211,54 @@ class NotificationService {
   }
 
   /**
+   * Get notifications for a specific appointment
+   */
+  async getAppointmentNotifications(appointmentId: string, limit: number = 50, offset: number = 0) {
+    try {
+      // Query notifications where message or subject contains the appointmentId or category is 'appointment'
+      const notifications = await Notification.find({
+        $and: [
+          { category: "appointment" },
+          {
+            $or: [
+              { message: { $regex: appointmentId, $options: "i" } },
+              { subject: { $regex: appointmentId, $options: "i" } },
+            ],
+          },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(offset);
+
+      const total = await Notification.countDocuments({
+        $and: [
+          { category: "appointment" },
+          {
+            $or: [
+              { message: { $regex: appointmentId, $options: "i" } },
+              { subject: { $regex: appointmentId, $options: "i" } },
+            ],
+          },
+        ],
+      });
+
+      return {
+        success: true,
+        notifications,
+        total,
+        limit,
+        offset,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.message,
+      };
+    }
+  }
+
+  /**
    * Retry failed notifications
    */
   async retryFailedNotifications() {

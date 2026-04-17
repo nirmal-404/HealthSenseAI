@@ -22,6 +22,8 @@ router.get("/:notificationId", (req, res) => NotificationController.getNotificat
 
 router.get("/user/:userId", (req, res) => NotificationController.getUserNotifications(req, res));
 
+router.get("/appointment/:appointmentId", (req, res) => NotificationController.getAppointmentNotifications(req, res));
+
 router.post("/retry-failed", (req, res) => NotificationController.retryFailedNotifications(req, res));
 
 router.get("/stats", (req, res) => NotificationController.getStats(req, res));

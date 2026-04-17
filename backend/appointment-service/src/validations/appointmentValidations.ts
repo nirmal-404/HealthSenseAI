@@ -3,19 +3,17 @@ import Joi from "joi";
 export const bookAppointmentValidation = {
   body: Joi.object().keys({
     patientId: Joi.string().required(),
+    patientName: Joi.string().required(),
+    patientEmail: Joi.string().email().required(),
+    patientPhone: Joi.string().optional(),
     doctorId: Joi.string().required(),
+    doctorName: Joi.string().required(),
+    doctorEmail: Joi.string().email().optional(),
     appointmentDate: Joi.date().required(),
     startTime: Joi.string().required(),
     endTime: Joi.string().required(),
     appointmentType: Joi.string().valid("video", "in-person").required(),
     symptoms: Joi.string().allow(""),
-    // Optional notification fields
-    doctorName: Joi.string().optional(),
-    patientName: Joi.string().optional(),
-    patientEmail: Joi.string().email().optional(),
-    patientPhone: Joi.string().optional(),
-    doctorEmail: Joi.string().email().optional(),
-    doctorPhone: Joi.string().optional(),
   }),
 };
 
