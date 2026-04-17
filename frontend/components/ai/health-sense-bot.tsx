@@ -428,7 +428,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
       className={cn(
         'relative flex flex-col overflow-hidden border-0 ring-0 gap-0',
         isPopupMode
-          ? 'mb-4 h-[600px] w-[400px] bg-white shadow-2xl'
+          ? 'mb-4 h-[600px] w-[400px] rounded-3xl border border-slate-200/90 bg-white shadow-2xl'
           : cn('h-full w-full py-0 px-0', isIntro ? 'bg-white shadow-none' : 'bg-white shadow-lg')
       )}
     >
@@ -437,11 +437,15 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
       )}
 
       {isPopupMode && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 text-white flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-blue-500/30 bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 text-white">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold tracking-wide">HealthSense AI Assistant</p>
+            <p className="mt-0.5 text-[11px] text-blue-100">Online · Personalized health guidance</p>
+          </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-white hover:bg-white/10"
+            className="h-8 w-8 text-white hover:bg-white/15"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -462,25 +466,26 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
                 <div key={msg.id}>
                   {msg.role === 'user' ? (
                     <div className="flex justify-end">
-                      <div className="max-w-xs rounded-2xl rounded-tr-none bg-blue-600 px-4 py-2 text-white text-sm">
+                      <div className="max-w-[82%] rounded-2xl rounded-br-md bg-blue-600 px-4 py-2.5 text-sm text-white shadow-sm">
                         {msg.content}
                       </div>
                     </div>
                   ) : (
                     <div className="flex justify-start">
-                      <div className="max-w-xs space-y-2">
-                        <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-2 text-slate-900 text-sm shadow-sm">
+                      <div className="max-w-[88%] space-y-2">
+                        <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-[0_2px_10px_rgba(15,23,42,0.08)]">
                           {msg.content}
                         </div>
 
                         {msg.type === 'follow-up' && (
-                          <form onSubmit={handleFollowUpSubmit} className="mt-3 space-y-3 bg-white rounded-lg p-3 border border-slate-200">
+                          <form onSubmit={handleFollowUpSubmit} className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                             {msg.data.map((q: string, i: number) => (
                               <div key={i} className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-700">{q}</label>
                                 <Input
                                   placeholder="Your answer..."
-                                  className="text-sm"
+                                  className="text-sm text-slate-900 placeholder:text-slate-500 caret-blue-600"
+                                  style={{ color: '#0f172a', WebkitTextFillColor: '#0f172a' }}
                                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q]: e.target.value }))}
                                   required
                                 />
@@ -501,7 +506,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
 
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-3 shadow-sm flex items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 shadow-sm">
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                     <span className="text-sm text-slate-600">Analyzing...</span>
                   </div>
@@ -577,7 +582,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
             'p-3 flex-shrink-0',
             isIntro
               ? 'border-t border-slate-200 bg-white/95 backdrop-blur'
-              : 'border-t border-slate-200 bg-white'
+              : 'border-t border-slate-200 bg-gradient-to-t from-white via-white to-slate-50/60'
           )}
         >
           <div className="relative">
@@ -590,9 +595,10 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
               className={cn(
                 'rounded-full pr-12 py-6',
                 isIntro
-                  ? 'border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500/50'
-                  : 'border-slate-300 bg-slate-100'
+                  ? 'border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 caret-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/50'
+                  : 'border-slate-300/90 bg-white text-slate-900 placeholder:text-slate-500 caret-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/40'
               )}
+              style={{ color: '#0f172a', WebkitTextFillColor: '#0f172a' }}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {

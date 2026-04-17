@@ -62,6 +62,74 @@ const ProfessionalLoadingSpinner = () => (
   </div>
 );
 
+const OutstandingAppointmentSkeletonCard = ({ index }: { index: number }) => {
+  const animationDelay = `${index * 120}ms`;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2.5">
+          <Skeleton
+            className="h-4 w-44 rounded-md animate-[pulse_1.6s_ease-in-out_infinite]"
+            style={{ animationDelay }}
+          />
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton
+                className="h-3.5 w-3.5 rounded-full animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+              <Skeleton
+                className="h-3 w-32 rounded-md animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton
+                className="h-3.5 w-3.5 rounded-full animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+              <Skeleton
+                className="h-3 w-24 rounded-md animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton
+                className="h-3.5 w-3.5 rounded-full animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+              <Skeleton
+                className="h-3 w-20 rounded-md animate-[pulse_1.6s_ease-in-out_infinite]"
+                style={{ animationDelay }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          <Skeleton
+            className="h-6 w-20 rounded-full animate-[pulse_1.6s_ease-in-out_infinite]"
+            style={{ animationDelay }}
+          />
+          <Skeleton
+            className="h-6 w-16 rounded-full animate-[pulse_1.6s_ease-in-out_infinite]"
+            style={{ animationDelay }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-3">
+        <Skeleton
+          className="h-8 w-24 rounded-md animate-[pulse_1.6s_ease-in-out_infinite]"
+          style={{ animationDelay }}
+        />
+      </div>
+    </div>
+  );
+};
+
 type PaymentFormProps = {
   appointmentId: string;
   paymentId: string;
@@ -233,24 +301,24 @@ export default function PatientPaymentsPage() {
     void confirmPayment();
   }, [requestedPaymentId, refreshPayments]);
 
-  const unpaidAppointments = useMemo(
+  const outstandingAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.paymentStatus !== 'paid'),
     [appointments]
   );
 
   useEffect(() => {
-    if (!unpaidAppointments.length) {
+    if (!outstandingAppointments.length) {
       return;
     }
 
     const hasSelection = selectedAppointmentId
-      ? unpaidAppointments.some((appointment) => appointment.appointmentId === selectedAppointmentId)
+      ? outstandingAppointments.some((appointment) => appointment.appointmentId === selectedAppointmentId)
       : false;
 
     if (!hasSelection) {
-      setSelectedAppointmentId(unpaidAppointments[0].appointmentId);
+      setSelectedAppointmentId(outstandingAppointments[0].appointmentId);
     }
-  }, [selectedAppointmentId, unpaidAppointments]);
+  }, [selectedAppointmentId, outstandingAppointments]);
 
   const selectedAppointment = useMemo(
     () =>
@@ -296,13 +364,13 @@ export default function PatientPaymentsPage() {
       : formatFeeAsCurrency(0);
 
   const payableAppointments = useMemo(
-    () => unpaidAppointments.filter((appointment) => isPayableAppointment(appointment)),
-    [unpaidAppointments]
+    () => outstandingAppointments.filter((appointment) => isPayableAppointment(appointment)),
+    [outstandingAppointments]
   );
 
   const outstandingAmount = useMemo(
-    () => payableAppointments.reduce((total, appointment) => total + (appointment.consultationFee || 0), 0),
-    [payableAppointments]
+    () => outstandingAppointments.reduce((total, appointment) => total + (appointment.consultationFee || 0), 0),
+    [outstandingAppointments]
   );
 
   const completedPaymentsCount = useMemo(
@@ -339,7 +407,7 @@ export default function PatientPaymentsPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Appointments</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{payableAppointments.length}</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">{outstandingAppointments.length}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Outstanding Amount</p>
@@ -376,16 +444,11 @@ export default function PatientPaymentsPage() {
               {appointmentsLoading ? (
                 <div className="space-y-3">
                   {[0, 1, 2].map((index) => (
-                    <div key={`appointment-loading-${index}`} className="rounded-xl border border-slate-200 bg-white p-4">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="mt-3 h-3 w-full" />
-                      <Skeleton className="mt-2 h-3 w-[85%]" />
-                      <Skeleton className="mt-4 h-8 w-24" />
-                    </div>
+                    <OutstandingAppointmentSkeletonCard key={`appointment-loading-${index}`} index={index} />
                   ))}
                 </div>
-              ) : unpaidAppointments.length ? (
-                unpaidAppointments.map((appointment) => {
+              ) : outstandingAppointments.length ? (
+                outstandingAppointments.map((appointment) => {
                   const payable = isPayableAppointment(appointment);
                   const isSelected = appointment.appointmentId === selectedAppointmentId;
                   const actionLabel = payable
@@ -467,7 +530,7 @@ export default function PatientPaymentsPage() {
               ) : (
                 <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 py-10 text-center">
                   <Calendar className="mx-auto mb-2 h-8 w-8 text-slate-300" />
-                  <p className="text-sm text-slate-500">No unpaid appointments right now.</p>
+                  <p className="text-sm text-slate-500">No outstanding appointments right now.</p>
                 </div>
               )}
             </CardContent>
