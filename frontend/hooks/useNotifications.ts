@@ -182,7 +182,7 @@ export const useNotifications = (userId?: string) => {
     try {
       setError(null);
       const response = await axiosInstance.put(
-        `/api/notifications/preferences/${userId}`,
+        `/notifications/preferences/${userId}`,
         updates
       );
       

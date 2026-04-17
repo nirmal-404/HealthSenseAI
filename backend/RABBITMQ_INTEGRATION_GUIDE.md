@@ -452,7 +452,7 @@ Cloud: amqp://username:password@host:port
 
 **Check:**
 - Email credentials are correct (Gmail requires app password)
-- SMS Twilio credentials are set
+- SMS SMSAPI.lk API key is set (SMSAPI_API_KEY)
 - Notification Service has internet access
 - Check Notification Service logs for errors
 

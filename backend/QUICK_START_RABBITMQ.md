@@ -214,19 +214,23 @@ echo $RABBITMQ_URL
 
 ### Issue: Email/SMS not sent
 
-**Cause:** SMTP/Twilio credentials not configured
+**Cause:** SMTP/SMSAPI.lk credentials not configured
 
 **Fix:** 
 1. Check .env in notification-service:
    ```bash
    cat .env | grep EMAIL
-   cat .env | grep TWILIO
+   cat .env | grep SMSAPI
    ```
 
 2. For Gmail, use App Password:
    - Go to Google Account settings
    - Create app-specific password
    - Use in EMAIL_PASSWORD
+
+3. For SMSAPI.lk:
+   - Get API Key from https://www.smsapi.lk
+   - Set SMSAPI_API_KEY in .env
 
 3. Restart notification service:
    ```bash
