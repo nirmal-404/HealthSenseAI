@@ -124,6 +124,20 @@ export async function approveAppointment(appointmentId: string, notes?: string):
   return unwrap(response);
 }
 
+export async function rejectAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/reject`, {
+    notes: notes ?? '',
+  });
+  return unwrap(response);
+}
+
+export async function reopenAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/reopen`, {
+    notes: notes ?? '',
+  });
+  return unwrap(response);
+}
+
 export async function searchDoctors(params: DoctorSearchParams = {}): Promise<DoctorOption[]> {
   const query: Record<string, string> = {};
 

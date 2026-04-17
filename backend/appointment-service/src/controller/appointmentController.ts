@@ -10,6 +10,7 @@ import {
   getAppointmentsByDoctorWithPatientsService,
   getAppointmentsByPatientService,
   getAppointmentStatusService,
+  reopenAppointmentService,
   rejectAppointmentService,
   rescheduleAppointmentService,
   updateInternalAppointmentPaymentStatusService,
@@ -106,6 +107,21 @@ export const rejectAppointmentController = catchAsync(async (req: XRequest, res:
 
   const response: XResponse = {
     message: "Appointment rejected successfully",
+    data: result,
+  };
+
+  res.status(httpStatus.OK).send(response);
+});
+
+export const reopenAppointmentController = catchAsync(async (req: XRequest, res: Response) => {
+  const result = await reopenAppointmentService(
+    String(req.params.id),
+    req.user?.id || "system",
+    req.body?.notes
+  );
+
+  const response: XResponse = {
+    message: "Appointment moved back to pending successfully",
     data: result,
   };
 

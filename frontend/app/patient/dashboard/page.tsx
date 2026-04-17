@@ -29,17 +29,16 @@ import type { TelemedicineSession, TelemedicineSessionAccess, TelemedicineSessio
 
 const summaryCards = [
   { title: 'Upcoming Visits', value: '06', icon: CalendarDays, tone: 'from-[#eaf1ff] to-[#f3f7ff]' },
-  { title: 'Active Doctors', value: '04', icon: Users, tone: 'from-[#e9f8f0] to-[#f3fcf7]' },
+  { title: 'Active Doctors', value: '02', icon: Users, tone: 'from-[#e9f8f0] to-[#f3fcf7]' },
   { title: 'New Reports', value: '03', icon: ClipboardList, tone: 'from-[#fff4e7] to-[#fffaf2]' },
   { title: 'Pending Bills', value: '02', icon: CreditCard, tone: 'from-[#f3efff] to-[#f8f6ff]' },
   { title: 'Wellness Score', value: '92%', icon: Activity, tone: 'from-[#e9f5ff] to-[#f3f9ff]' },
 ];
 
 const doctorSchedule = [
-  { name: 'Dr. Kumod De Silva', speciality: 'General Medicine', time: '09:00 AM - 10:00 AM', status: 'Confirmed' },
-  { name: 'Dr. Ravindu Perera', speciality: 'Orthopedics', time: '10:00 AM - 12:00 PM', status: 'Confirmed' },
-  { name: 'Dr. Kumod De Silva', speciality: 'Cardiology', time: '01:00 PM - 01:40 PM', status: 'Confirmed' },
-  { name: 'Dr. Kumod De Silva', speciality: 'Pediatrics', time: '02:00 PM - 03:00 PM', status: 'Available' },
+  { scheduleId: 'doc-sch-1', name: 'Dr. Kumod De Silva', speciality: 'General Medicine', time: '09:00 AM - 10:00 AM', status: 'Confirmed' },
+  { scheduleId: 'doc-sch-2', name: 'Dr. Ravindu Perera', speciality: 'Orthopedics', time: '10:00 AM - 12:00 PM', status: 'Confirmed' },
+  { scheduleId: 'doc-sch-4', name: 'Dr. Kumod De Silva', speciality: 'Pediatrics', time: '02:00 PM - 03:00 PM', status: 'Available' },
 ];
 
 const alerts = [
@@ -435,6 +434,9 @@ export default function PatientDashboardPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {summaryCards.map((card) => {
           const Icon = card.icon;
+          const cardValue = card.title === 'Pending Bills'
+            ? `${outstandingAppointments.length}`
+            : card.value;
 
           return (
             <article
@@ -443,7 +445,7 @@ export default function PatientDashboardPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-2xl font-semibold text-[#1f2a44]">{card.value}</p>
+                  <p className="text-2xl font-semibold text-[#1f2a44]">{cardValue}</p>
                   <p className="mt-0.5 text-xs font-medium tracking-wide text-slate-500">{card.title}</p>
                 </div>
                 <div className={`rounded-xl bg-gradient-to-b p-2.5 ${card.tone}`}>
@@ -683,7 +685,7 @@ export default function PatientDashboardPage() {
           <div className="space-y-3">
             {doctorSchedule.map((doctor) => (
               <div
-                key={doctor.name}
+                key={doctor.scheduleId}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e8eef7] bg-[#fcfdff] px-3 py-2.5"
               >
                 <div className="flex items-center gap-3">
