@@ -15,21 +15,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Bot,
-  CalendarCheck2,
-  Clock3,
-  CreditCard,
-  FileText,
-  HeartPulse,
+  BarChart3,
+  Settings,
+  Users,
   LayoutDashboard,
   LogOut,
-  Pill,
   Search,
-  Stethoscope,
-  Video,
+  Shield,
+  FileText,
+  Bell as BellIcon,
 } from 'lucide-react';
 
-type PatientLayoutProps = {
+type AdminLayoutProps = {
   children: ReactNode;
 };
 
@@ -41,30 +38,24 @@ type SidebarItem = {
 };
 
 const sidebarItems: SidebarItem[] = [
-  { label: 'Dashboard', href: '/patient/dashboard', icon: LayoutDashboard },
-  { label: 'Appointments', href: '/patient/appointments', icon: CalendarCheck2 },
-  { label: 'Doctors', href: '/patient/doctors', icon: Stethoscope },
-  { label: 'Medical Records', href: '/patient/medical-records', icon: FileText },
-  { label: 'Prescriptions', href: '/patient/prescriptions', icon: Pill },
-  { label: 'Payments', href: '/patient/payments', icon: CreditCard },
-  { label: 'HealthSense AI', href: '/patient/ai-assistance', icon: Bot },
-  { label: 'Telemedicine', href: '/patient/telemedicine', icon: Video },
+  { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Doctors', href: '/admin/doctors', icon: Shield },
+  { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 const pageTitles: Record<string, string> = {
-  '/patient/dashboard': 'Dashboard',
-  '/patient/appointments': 'Appointments',
-  '/patient/doctors': 'Doctors',
-  '/patient/medical-records': 'Medical Records',
-  '/patient/prescriptions': 'Prescriptions',
-  '/patient/payments': 'Payments',
-  '/patient/ai-assistance': 'AI Assistance',
-  '/patient/telemedicine': 'Telemedicine',
+  '/admin/dashboard': 'Dashboard',
+  '/admin/users': 'Users',
+  '/admin/doctors': 'Doctors',
+  '/admin/reports': 'Reports',
+  '/admin/settings': 'Settings',
 };
 
 function initials(firstName?: string, lastName?: string) {
-  const first = firstName?.[0] ?? 'P';
-  const last = lastName?.[0] ?? 'T';
+  const first = firstName?.[0] ?? 'A';
+  const last = lastName?.[0] ?? 'D';
   return `${first}${last}`.toUpperCase();
 }
 
@@ -86,7 +77,7 @@ function getPageTitle(pathname: string) {
   return matchedPath ? pageTitles[matchedPath] : 'Dashboard';
 }
 
-export default function PatientLayout({ children }: PatientLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const { user, logout, refreshUser } = useAuth();
   const [currentDateTime, setCurrentDateTime] = useState(() => new Date());
@@ -107,7 +98,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
   const firstName = user?.firstName?.trim() ?? '';
   const lastName = user?.lastName?.trim() ?? '';
-  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Patient User';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Admin User';
   const profileStatus = user?.isEmailVerified ? 'Email Verified' : 'Verification Pending';
   const formattedLastLogin = formatLastLogin(user?.lastLogin);
   const pageTitle = getPageTitle(pathname);
@@ -126,17 +117,17 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const isActiveItem = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <RoleGuard allowedRoles={['patient']}>
-      <main className="h-screen overflow-hidden bg-[#eff4fc] p-2 md:p-4 lg:p-6">
-        <div className="mx-auto flex h-full w-full max-w-[1600px] overflow-hidden rounded-[28px] border border-[#dce5f4] bg-[#f8fbff] shadow-[0_24px_70px_rgba(45,90,180,0.14)]">
+    <RoleGuard allowedRoles={['admin']}>
+      <main className="h-screen overflow-hidden bg-[#f0f4f8] p-2 md:p-4 lg:p-6">
+        <div className="mx-auto flex h-full w-full max-w-400 overflow-hidden rounded-[28px] border border-[#dce5f4] bg-[#f8fbff] shadow-[0_24px_70px_rgba(45,90,180,0.14)]">
           <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-[#e6edf8] bg-[#f9fbff] px-4 py-5 lg:flex">
             <div className="mb-6 flex items-center gap-2">
-              <div className="rounded-xl bg-[#3363ea] p-2 text-white shadow-sm shadow-blue-200">
-                <HeartPulse className="h-5 w-5" />
+              <div className="rounded-xl bg-[#7c3aed] p-2 text-white shadow-sm shadow-purple-200">
+                <Shield className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xl font-semibold text-[#1f2a44]">HealthSenseAI</p>
-                <p className="text-xs text-slate-400">Patient Workspace</p>
+                <p className="text-xs text-slate-400">Admin Workspace</p>
               </div>
             </div>
 
@@ -151,8 +142,8 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     href={item.href}
                     className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-[#eaf1ff] text-[#345ede]'
-                        : 'text-slate-500 hover:bg-[#eef4ff] hover:text-[#345ede]'
+                        ? 'bg-[#ede9fe] text-[#7c3aed]'
+                        : 'text-slate-500 hover:bg-[#eef4ff] hover:text-[#7c3aed]'
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
@@ -160,7 +151,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                       {item.label}
                     </span>
                     {item.badge ? (
-                      <span className="rounded-full bg-[#3460e9] px-2 py-0.5 text-[11px] font-semibold text-white">
+                      <span className="rounded-full bg-[#7c3aed] px-2 py-0.5 text-[11px] font-semibold text-white">
                         {item.badge}
                       </span>
                     ) : null}
@@ -170,14 +161,14 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             </nav>
 
             <div className="mt-auto space-y-3">
-              <div className="rounded-2xl bg-gradient-to-br from-[#3b66ea] to-[#2952cf] p-4 text-white">
+              <div className="rounded-2xl bg-linear-to-br from-[#7c3aed] to-[#5b21b6] p-4 text-white">
                 <p className="mt-2 text-3xl font-semibold leading-none tracking-wide">{formattedTime}</p>
-                <p className="mt-1 text-sm text-blue-100">{formattedDate}</p>
+                <p className="mt-1 text-sm text-purple-100">{formattedDate}</p>
               </div>
 
               <button
                 onClick={() => void logout()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#dce5f2] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#c7d8fb] hover:bg-[#eef4ff] hover:text-[#2f58db]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#dce5f2] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#c7d8fb] hover:bg-[#eef4ff] hover:text-[#7c3aed]"
               >
                 <LogOut className="h-4 w-4" />
                 Log out
@@ -185,7 +176,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             </div>
           </aside>
 
-          <section className="flex h-full flex-1 flex-col overflow-hidden">
+          <section className="h-full flex-1 overflow-y-auto">
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6edf8] bg-white px-4 py-4 md:px-6 lg:px-8">
               <div>
                 <h1 className="text-xl font-semibold text-[#1d2944]">{pageTitle}</h1>
@@ -206,14 +197,14 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 rounded-full border border-[#dce5f2] bg-white px-2 py-1 text-left">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eaf1ff] text-xs font-bold text-[#2f58db]">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ede9fe] text-xs font-bold text-[#7c3aed]">
                         {initials(user?.firstName, user?.lastName)}
                       </div>
                       <div className="pr-1">
-                        <p className="max-w-[160px] truncate text-sm font-semibold text-[#1f2a44]" title={fullName}>
+                        <p className="max-w-40 truncate text-sm font-semibold text-[#1f2a44]" title={fullName}>
                           {fullName}
                         </p>
-                        <p className="max-w-[160px] truncate text-[11px] text-slate-500" title={user?.email || 'No email'}>
+                        <p className="max-w-40 truncate text-[11px] text-slate-500" title={user?.email || 'No email'}>
                           {user?.email || 'No email'}
                         </p>
                         <p className={`text-[10px] font-medium ${user?.isEmailVerified ? 'text-emerald-600' : 'text-amber-600'}`}>
@@ -255,7 +246,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     <DropdownMenuSeparator />
                     <button
                       onClick={() => void logout()}
-                      className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#dce5f2] bg-[#f8fbff] px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#c7d8fb] hover:bg-[#eef4ff] hover:text-[#2f58db]"
+                      className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#dce5f2] bg-[#f8fbff] px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#c7d8fb] hover:bg-[#ede9fe] hover:text-[#7c3aed]"
                     >
                       <LogOut className="h-4 w-4" />
                       Log out
@@ -277,7 +268,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                       href={item.href}
                       className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${
                         active
-                          ? 'border-[#d6e2ff] bg-[#eaf1ff] text-[#315ae7]'
+                          ? 'border-[#d6e2ff] bg-[#ede9fe] text-[#7c3aed]'
                           : 'border-[#dce5f2] bg-white text-slate-500'
                       }`}
                     >
@@ -289,9 +280,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {children}
-            </div>
+            {children}
           </section>
         </div>
       </main>

@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ShieldCheck, UserPlus, Users, Activity, BarChart3, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -26,15 +27,18 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold tracking-tight">Admin Control Center</h1>
             <p className="text-slate-500 text-lg">Managing HealthSenseAI platform infrastructure and staff.</p>
           </div>
-          <div className="flex gap-4">
-            <Link href="/admin/doctors/register">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
-                <UserPlus className="w-4 h-4" /> Register Doctor
+          <div className="flex items-center gap-3">
+            <NotificationBell userId={user?.id} />
+            <div className="flex gap-4">
+              <Link href="/admin/doctors/register">
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
+                  <UserPlus className="w-4 h-4" /> Register Doctor
+                </Button>
+              </Link>
+              <Button variant="outline" className="gap-2">
+                <Settings className="w-4 h-4" /> Platform Settings
               </Button>
-            </Link>
-            <Button variant="outline" className="gap-2">
-              <Settings className="w-4 h-4" /> Platform Settings
-            </Button>
+            </div>
           </div>
         </div>
 

@@ -9,6 +9,13 @@ export const bookAppointmentValidation = {
     endTime: Joi.string().required(),
     appointmentType: Joi.string().valid("video", "in-person").required(),
     symptoms: Joi.string().allow(""),
+    // Optional notification fields
+    doctorName: Joi.string().optional(),
+    patientName: Joi.string().optional(),
+    patientEmail: Joi.string().email().optional(),
+    patientPhone: Joi.string().optional(),
+    doctorEmail: Joi.string().email().optional(),
+    doctorPhone: Joi.string().optional(),
   }),
 };
 
@@ -34,11 +41,16 @@ export const decisionValidation = {
   params: Joi.object().keys({
     id: Joi.string().required(),
   }),
-  body: Joi.object()
-    .keys({
-      notes: Joi.string().allow(""),
-    })
-    .optional(),
+  body: Joi.object().keys({
+    notes: Joi.string().allow(""),
+    // Optional notification fields for doctor/patient contact info
+    doctorName: Joi.string().optional(),
+    patientName: Joi.string().optional(),
+    patientEmail: Joi.string().email().optional(),
+    patientPhone: Joi.string().optional(),
+    doctorEmail: Joi.string().email().optional(),
+    doctorPhone: Joi.string().optional(),
+  }),
 };
 
 export const byPatientValidation = {

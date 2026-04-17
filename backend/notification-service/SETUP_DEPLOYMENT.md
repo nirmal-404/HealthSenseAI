@@ -6,7 +6,7 @@
 - MongoDB
 - RabbitMQ
 - Gmail account with app-specific password
-- Twilio account with credentials
+- SMSAPI.lk account with API key
 
 ## Local Development Setup
 
@@ -37,10 +37,9 @@ EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-specific-password
 EMAIL_FROM=HealthSense <noreply@healthsense.com>
 
-# SMS Configuration (Twilio)
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_PHONE_NUMBER=+your-verified-number
+# SMS Configuration (SMSAPI.lk)
+SMSAPI_API_KEY=your-smsapi-api-key
+SMSAPI_SENDER_ID=HealthSense
 
 # RabbitMQ Configuration
 RABBITMQ_URL=amqp://guest:guest@localhost:5672
@@ -184,20 +183,19 @@ curl -X POST http://localhost:5005/notifications/send \
 
 ---
 
-## Twilio Configuration
+## SMSAPI.lk Configuration
 
-### Step 1: Get Credentials
+### Step 1: Get API Credentials
 
-1. Sign up at https://www.twilio.com
-2. Get your Account SID and Auth Token from dashboard
-3. Verify a phone number to use as `TWILIO_PHONE_NUMBER`
+1. Sign up at https://www.smsapi.lk
+2. Get your API Key from the dashboard
+3. Set a Sender ID (display name for SMS)
 
 ### Step 2: Update .env
 
 ```bash
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxx
-TWILIO_PHONE_NUMBER=+1234567890
+SMSAPI_API_KEY=your-api-key-from-smsapi-dashboard
+SMSAPI_SENDER_ID=HealthSense
 ```
 
 ### Step 3: Verify Configuration
@@ -210,7 +208,7 @@ curl -X POST http://localhost:5005/notifications/send \
     "userId": "test-user",
     "type": "sms",
     "category": "verification",
-    "recipient": "+1234567890",
+    "recipient": "+94713123456",
     "message": "This is a test SMS from HealthSense"
   }'
 ```
@@ -260,9 +258,8 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
       - EMAIL_FROM=HealthSense <noreply@healthsense.com>
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - SMSAPI_API_KEY=${SMSAPI_API_KEY}
+      - SMSAPI_SENDER_ID=HealthSense
     depends_on:
       - rabbitmq
       - mongo

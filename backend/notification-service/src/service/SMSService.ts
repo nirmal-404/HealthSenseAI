@@ -1,36 +1,50 @@
-import twilio from "twilio";
+import axios from "axios";
 import { CONFIG } from "../config/envConfig";
 import { SMSSendResult } from "../types";
 
 class SMSService {
-  private client: any;
+  private apiKey: string;
+  private senderId: string;
+  private apiUrl = "https://api.smsapi.lk/api/SmsAPI/SendSingleSms";
 
   constructor() {
-    if (CONFIG.TWILIO_ACCOUNT_SID && CONFIG.TWILIO_AUTH_TOKEN) {
-      this.client = twilio(CONFIG.TWILIO_ACCOUNT_SID, CONFIG.TWILIO_AUTH_TOKEN);
-    }
+    this.apiKey = CONFIG.SMSAPI_API_KEY;
+    this.senderId = CONFIG.SMSAPI_SENDER_ID;
   }
 
   async sendSMS(to: string, message: string): Promise<SMSSendResult> {
     try {
-      if (!this.client) {
-        console.warn("Twilio not configured, skipping SMS");
+      if (!this.apiKey) {
+        console.warn("SMSAPI.lk not configured, skipping SMS");
         return {
           success: false,
           error: "SMS service not configured",
         };
       }
 
-      const result = await this.client.messages.create({
-        body: message,
-        from: CONFIG.TWILIO_PHONE_NUMBER,
-        to,
-      });
+      // Format phone number - remove + if present and ensure it starts with country code
+      const formattedPhone = to.replace(/\D/g, '').replace(/^1/, '');
 
-      return {
-        success: true,
-        messageId: result.sid,
-      };
+      const response = await axios.post(this.apiUrl, 
+        {
+          API_KEY: this.apiKey,
+          SenderID: this.senderId,
+          Message: message,
+          MobileNumbers: formattedPhone,
+        }
+      );
+
+      if (response.data && response.data.StatusCode === 200) {
+        return {
+          success: true,
+          messageId: response.data.MessageID || response.data.message_id,
+        };
+      } else {
+        return {
+          success: false,
+          error: response.data?.StatusMessage || "Failed to send SMS",
+        };
+      }
     } catch (error: any) {
       console.error("SMS sending error:", error);
       return {
