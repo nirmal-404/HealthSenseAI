@@ -99,7 +99,6 @@ export const bookAppointmentService = async (
   const consultationFee = getConsultationFee(payload.appointmentType);
 
   // Check for duplicate appointments created within the last 60 seconds
-  // This prevents double-submissions and network retries from creating duplicates
   const recentThreshold = new Date(Date.now() - 60000); // 60 seconds ago
   
   const existingAppointment = await Appointment.findOne({

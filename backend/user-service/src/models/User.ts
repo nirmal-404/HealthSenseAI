@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 import bcrypt from "bcrypt";
 
 export interface IUser extends Document {
+  userId?: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -28,6 +29,13 @@ export interface IUser extends Document {
 
 const userSchema = new mongoose.Schema<IUser>(
   {
+    userId: {
+      type: String,
+      default: () => new mongoose.Types.ObjectId().toString(),
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     firstName: {
       type: String,
       required: [true, "firstName is required"],

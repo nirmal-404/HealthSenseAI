@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SocketIOProvider } from "@/components/providers/SocketIOProvider";
 import { RealtimeNotificationBell } from "@/components/common/RealtimeNotificationBell";
-// import { SocketIODiagnostics } from "@/components/SocketIODiagnostics";
 import { Toaster } from "sonner";
 import HealthSenseBot from "@/components/ai/health-sense-bot";
 
@@ -38,7 +37,6 @@ export default function RootLayout({
             <ThemeProvider>
               {children}
               <RealtimeNotificationBell />
-              {/* <SocketIODiagnostics /> */}
               <HealthSenseBot />
               <Toaster position="top-right" />
             </ThemeProvider>

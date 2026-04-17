@@ -132,6 +132,40 @@ class NotificationController {
   }
 
   /**
+   * Get notifications for a specific appointment
+   * GET /notifications/appointment/:appointmentId
+   */
+  async getAppointmentNotifications(req: Request, res: Response) {
+    try {
+      const appointmentId = req.params.appointmentId as string;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const result = await NotificationService.getAppointmentNotifications(appointmentId, limit, offset);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        notifications: result.notifications,
+        total: result.total,
+        limit,
+        offset,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error?.message,
+      });
+    }
+  }
+
+  /**
    * Retry failed notifications
    * POST /notifications/retry-failed
    */

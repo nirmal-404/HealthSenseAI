@@ -22,6 +22,10 @@ import { XResponse } from "../types/XResponse";
 import { RegisterUserDTO } from "../types/UserManagemetTypes";
 
 export const registerController = catchAsync(async (req: XRequest, res: Response) => {
+  // Validate passwords match
+  if (req.body.password !== req.body.confirmPassword) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Passwords do not match");
+  }
 
   const registerUserDTO: RegisterUserDTO = {
     firstName: req.body.firstName,

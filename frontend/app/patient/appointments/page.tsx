@@ -27,6 +27,7 @@ import { AppointmentCard } from '@/components/patient/appointments/AppointmentCa
 import { BookAppointmentDialog } from '@/components/patient/appointments/BookAppointmentDialog';
 import { RescheduleAppointmentDialog } from '@/components/patient/appointments/RescheduleAppointmentDialog';
 import { CancelAppointmentDialog } from '@/components/patient/appointments/CancelAppointmentDialog';
+import { AppointmentNotificationsCard } from '@/components/patient/appointments/AppointmentNotificationsCard';
 
 const PAGE_SIZE = 6;
 
@@ -63,6 +64,7 @@ export default function PatientAppointmentsPage() {
   const [doctorError, setDoctorError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);
 
   const fetchAppointments = useCallback(
     async (showRefreshSpinner = false) => {
@@ -285,16 +287,42 @@ export default function PatientAppointmentsPage() {
         <>
           <div className="grid gap-4 md:grid-cols-2">
             {paginatedAppointments.map((appointment) => (
-              <AppointmentCard
-                key={appointment.appointmentId}
-                appointment={appointment}
-                doctorLabel={doctorLabelMap.get(appointment.doctorId)}
-                actionLoading={actionLoadingById[appointment.appointmentId] || null}
-                onReschedule={setRescheduleTarget}
-                onCancel={setCancelTarget}
-              />
+              <div key={appointment.appointmentId} className="space-y-2">
+                <AppointmentCard
+                  appointment={appointment}
+                  doctorLabel={doctorLabelMap.get(appointment.doctorId)}
+                  actionLoading={actionLoadingById[appointment.appointmentId] || null}
+                  onReschedule={setRescheduleTarget}
+                  onCancel={setCancelTarget}
+                />
+                {expandedAppointmentId === appointment.appointmentId && (
+                  <AppointmentNotificationsCard
+                    appointmentId={appointment.appointmentId}
+                    appointmentDate={appointment.appointmentDate}
+                  />
+                )}
+              </div>
             ))}
           </div>
+
+          {/* Show/Hide Notifications Button */}
+          {paginatedAppointments.length > 0 && (
+            <div className="flex justify-center pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() =>
+                  setExpandedAppointmentId(
+                    expandedAppointmentId ? null : paginatedAppointments[0].appointmentId
+                  )
+                }
+              >
+                {expandedAppointmentId ? '📬 Hide' : '📬 Show'} Appointment Notifications
+              </Button>
+            </div>
+          )}
 
           {/* Pagination */}
           {totalPages > 1 ? (

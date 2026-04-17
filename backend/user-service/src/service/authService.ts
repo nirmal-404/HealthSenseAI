@@ -36,10 +36,26 @@ export const registerService = async (registerUserDTO: RegisterUserDTO) => {
     });
 
     const verifyUrl = `${CONFIG.CLIENT_URL}/verify-email/${verificationToken}`;
-    await sendEmail({
+    
+    // Send email asynchronously without blocking registration
+    // If email fails, log error but don't fail the registration
+    sendEmail({
       to: user.email,
       subject: "Verify your email",
       html: `<p>Click <a href="${verifyUrl}">here</a> to verify your email. Link expires in 24 hours.</p>`,
+    }).catch((emailError) => {
+      console.error(`Email verification failed for ${user.email}:`, emailError?.message);
+      // Log to monitoring in production
+      if (CONFIG.ENV === "production") {
+        console.error({
+          alert: "Email Verification Failed",
+          service: "authService",
+          userId: user._id.toString(),
+          email: user.email,
+          error: emailError?.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
     });
 
     return {

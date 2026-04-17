@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const platformStats = [
     { title: 'Total Users', value: '5,672', delta: '+12%', icon: Users },
     { title: 'Active Doctors', value: '48', delta: '+2', icon: Activity },
-    { title: 'Platform Health', value: '99.9%', delta: 'Stable', icon: ShieldCheck },
+    { title: 'Platform Health', value: '99.9%', delta: 'Stable', icon: Shield },
     { title: 'Monthly Revenue', value: '$12,450', delta: '+8%', icon: BarChart3 },
   ];
 

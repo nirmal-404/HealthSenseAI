@@ -118,7 +118,7 @@ export function RescheduleAppointmentDialog({
                 type="date"
                 value={appointmentDate}
                 onChange={(event) => setAppointmentDate(event.target.value)}
-                className="h-10 rounded-lg border-slate-300 bg-white"
+                className="h-10 rounded-lg border-slate-300 bg-white text-black"
                 required
               />
             </div>
@@ -133,7 +133,7 @@ export function RescheduleAppointmentDialog({
                   type="time"
                   value={startTime}
                   onChange={(event) => setStartTime(event.target.value)}
-                  className="h-10 rounded-lg border-slate-300 bg-white"
+                  className="h-10 rounded-lg border-slate-300 bg-white text-black"
                   required
                 />
               </div>
@@ -147,7 +147,7 @@ export function RescheduleAppointmentDialog({
                   type="time"
                   value={endTime}
                   onChange={(event) => setEndTime(event.target.value)}
-                  className="h-10 rounded-lg border-slate-300 bg-white"
+                  className="h-10 rounded-lg border-slate-300 bg-white text-black"
                   required
                 />
               </div>
@@ -162,7 +162,7 @@ export function RescheduleAppointmentDialog({
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Add a reason for rescheduling..."
-                className="min-h-20 rounded-lg border-slate-300 bg-white resize-none"
+                className="min-h-20 rounded-lg border-slate-300 bg-white text-black resize-none"
               />
             </div>
 

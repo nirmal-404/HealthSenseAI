@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Search, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -65,6 +66,7 @@ export function BookAppointmentDialog({
   onDoctorSearch,
   onSubmit,
 }: BookAppointmentDialogProps) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState(getNextDay());
@@ -86,6 +88,11 @@ export function BookAppointmentDialog({
 
   const selectedDoctorLabel = useMemo(
     () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId)?.name,
+    [doctorOptions, selectedDoctorId]
+  );
+
+  const selectedDoctor = useMemo(
+    () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId),
     [doctorOptions, selectedDoctorId]
   );
 
@@ -143,9 +150,19 @@ export function BookAppointmentDialog({
     setValidationError(null);
 
     try {
+      // Get patient name from first and last name
+      const patientName = user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : 'Patient';
+
       await onSubmit({
         patientId,
+        patientName,
+        patientEmail: user?.email || '',
+        patientPhone: user?.phoneNumber,
         doctorId,
+        doctorName: selectedDoctor?.name || 'Doctor',
+        doctorEmail: selectedDoctor?.email,
         appointmentDate,
         startTime,
         endTime,

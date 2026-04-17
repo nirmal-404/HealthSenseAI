@@ -10,8 +10,9 @@ export const registerValidation = {
         gender: Joi.string().required().valid("male", "female", "other"),
         address: Joi.string().allow(""),
         password: Joi.string().required(),
+        confirmPassword: Joi.string().required(),
         role: Joi.string().required().valid("patient", "doctor", "admin")
-    })
+    }).with('password', 'confirmPassword').unknown(true)
 }
 
 export const loginValidation = {

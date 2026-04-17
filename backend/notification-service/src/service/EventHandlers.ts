@@ -12,9 +12,9 @@ export const handleAppointmentBooked = async (
   payload: AppointmentNotificationPayload
 ): Promise<void> => {
   console.log(
-    `\n📋 Processing appointment.booked event for appointment ${payload.appointmentId}`
+    `\n Processing appointment.booked event for appointment ${payload.appointmentId}`
   );
-  console.log(`📧 Payload received:`, {
+  console.log(`Payload received:`, {
     appointmentId: payload.appointmentId,
     patientEmail: payload.patientEmail,
     doctorEmail: payload.doctorEmail,
@@ -38,7 +38,7 @@ export const handleAppointmentBooked = async (
     
     if (!payload.patientEmail || !payload.patientPhone) {
       console.warn(
-        `⚠️  Missing patient contact info - Email: ${payload.patientEmail ? "✓" : "✗"}, Phone: ${payload.patientPhone ? "✓" : "✗"}`
+        ` Missing patient contact info - Email: ${payload.patientEmail ? "✓" : "✗"}, Phone: ${payload.patientPhone ? "✓" : "✗"}`
       );
     } else {
       // Patient email
@@ -63,11 +63,11 @@ export const handleAppointmentBooked = async (
     }
 
     // Send doctor notifications
-    console.log(`\n👨‍⚕️ Sending doctor notifications...`);
+    console.log(`\n Sending doctor notifications...`);
 
     if (!payload.doctorEmail || !payload.doctorPhone) {
       console.warn(
-        `⚠️  Missing doctor contact info - Email: ${payload.doctorEmail ? "✓" : "✗"}, Phone: ${payload.doctorPhone ? "✓" : "✗"}`
+        `  Missing doctor contact info - Email: ${payload.doctorEmail ? "✓" : "✗"}, Phone: ${payload.doctorPhone ? "✓" : "✗"}`
       );
     } else {
       const doctorEmailSubject = `New Appointment Booked - ${appointmentData.patientName}`;
@@ -119,12 +119,12 @@ export const handleAppointmentBooked = async (
     SocketIOService.notifyAppointmentBooked(payload);
 
     console.log(
-      `\n✅ Appointment booking notifications completed: ${successCount} sent`
+      `\n Appointment booking notifications completed: ${successCount} sent`
     );
     console.log(`   Appointment ID: ${payload.appointmentId}\n`);
   } catch (error: any) {
     console.error(
-      `❌ Error handling appointment.booked event: ${error?.message}`
+      ` Error handling appointment.booked event: ${error?.message}`
     );
     throw error;
   }
