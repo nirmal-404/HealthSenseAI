@@ -8,6 +8,7 @@ import { CONFIG } from "./config/envConfig";
 import { connectDB } from "./config/db";
 import { requestLogger, corsHeaders, errorHandler } from "./middlewares";
 import EmailService from "./service/EmailService";
+import SMSService from "./service/SMSService";
 import RabbitMQService from "./service/RabbitMQService";
 import SocketIOService from "./service/SocketIOService";
 import {
@@ -65,6 +66,14 @@ const startServer = async () => {
     if (!emailConnected && CONFIG.ENV === "production") {
       console.error("⚠️  WARNING: Email service connection failed in production!");
       console.error("This may cause notification delivery failures.");
+    }
+
+    // Verify SMS service connection
+    const smsConnected = await SMSService.verifyConnection();
+
+    if (!smsConnected && CONFIG.ENV === "production") {
+      console.warn("⚠️  WARNING: SMS service connection failed in production!");
+      console.warn("SMS notifications may not be delivered.");
     }
 
     // Connect to RabbitMQ and set up event handlers
