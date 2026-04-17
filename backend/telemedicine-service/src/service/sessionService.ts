@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto";
 import { SESSION_STATUS, EVENT_CHANNELS } from "../constants";
-import { ForbiddenError, NotFoundError } from "../errors/AppError";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../errors/AppError";
 import { SessionRepository } from "../repositories/sessionRepository";
 import { AuthUser } from "../middlewares/auth";
 import { CONFIG } from "../config/envConfig";
@@ -33,23 +37,66 @@ export class SessionService {
 
   /** Creates a Jitsi-backed session record. */
   async create(
-    input: { doctorId: string; patientId: string; appointmentId?: string },
+    input: {
+      doctorId: string;
+      patientId: string;
+      appointmentId: string;
+      appointmentType: "video";
+      appointmentDate?: string;
+      startTime?: string;
+      endTime?: string;
+      consultationFee?: number;
+      doctorName?: string;
+      patientName?: string;
+    },
     user: AuthUser,
   ) {
     this.assertActorCanCreate(input, user);
+
+    if (input.appointmentType !== "video") {
+      throw new ValidationError(
+        "Telemedicine sessions can only be created for video appointments",
+      );
+    }
+
+    const existing = await this.repo.findByAppointmentId(input.appointmentId);
+    if (existing) {
+      return existing;
+    }
+
     const sessionId = randomUUID();
     const roomName = `HealthSense_${sessionId.replace(/-/g, "")}`;
     const domain = CONFIG.JITSI_PUBLIC_DOMAIN;
     const jitsiUrl = `https://${domain}/${roomName}`;
-    return this.repo.create({
-      sessionId,
-      appointmentId: input.appointmentId,
-      doctorId: input.doctorId,
-      patientId: input.patientId,
-      roomName,
-      jitsiUrl,
-      status: SESSION_STATUS.ACTIVE,
-    });
+
+    try {
+      return await this.repo.create({
+        sessionId,
+        appointmentId: input.appointmentId,
+        appointmentType: input.appointmentType,
+        appointmentDate: input.appointmentDate
+          ? new Date(input.appointmentDate)
+          : undefined,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        consultationFee: input.consultationFee,
+        doctorName: input.doctorName,
+        patientName: input.patientName,
+        doctorId: input.doctorId,
+        patientId: input.patientId,
+        roomName,
+        jitsiUrl,
+        status: SESSION_STATUS.SCHEDULED,
+      });
+    } catch (error: any) {
+      if (error?.code === 11000 && error?.keyPattern?.appointmentId) {
+        const duplicate = await this.repo.findByAppointmentId(input.appointmentId);
+        if (duplicate) {
+          return duplicate;
+        }
+      }
+      throw error;
+    }
   }
 
   private assertActorCanCreate(
@@ -169,5 +216,22 @@ export class SessionService {
       throw new ForbiddenError("Cannot list another doctor's sessions");
     }
     return this.repo.listByDoctor(doctorId, page, limit);
+  }
+
+  /** Paginated history for a patient. */
+  async listForPatient(
+    patientId: string,
+    page: number,
+    limit: number,
+    user: AuthUser,
+  ) {
+    const role = user.role?.toLowerCase() || "";
+    if (role === "patient" && user.id !== patientId) {
+      throw new ForbiddenError("Cannot list another patient's sessions");
+    }
+    if (role === "doctor") {
+      throw new ForbiddenError("Doctors cannot list sessions by patient");
+    }
+    return this.repo.listByPatient(patientId, page, limit);
   }
 }

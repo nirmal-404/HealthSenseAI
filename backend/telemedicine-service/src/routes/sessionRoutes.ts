@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth";
+import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import { validate } from "../middlewares/validate";
 import {
   createSessionBodySchema,
   doctorIdParamSchema,
   endSessionBodySchema,
   paginationQuerySchema,
+  patientIdParamSchema,
   sessionIdParamSchema,
 } from "../validations/sessionSchemas";
 import {
@@ -17,18 +19,20 @@ import {
   getSummary,
   joinSession,
   listDoctorSessions,
+  listPatientSessions,
   postStartSession,
 } from "../controller/sessionController";
 
 const router = Router();
 
-router.use(requireAuth);
-
 router.post(
   "/create",
+  requireInternalServiceKey,
   validate({ body: createSessionBodySchema }),
   createSession,
 );
+
+router.use(requireAuth);
 
 router.get(
   "/:id/token",
@@ -58,6 +62,12 @@ router.get(
   "/doctor/:doctorId",
   validate({ params: doctorIdParamSchema, query: paginationQuerySchema }),
   listDoctorSessions,
+);
+
+router.get(
+  "/patient/:patientId",
+  validate({ params: patientIdParamSchema, query: paginationQuerySchema }),
+  listPatientSessions,
 );
 
 router.get(

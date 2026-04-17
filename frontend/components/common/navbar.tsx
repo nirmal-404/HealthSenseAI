@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, HeartPulse, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import { Menu, X, HeartPulse, User, LogOut, Settings, LayoutDashboard, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import {
