@@ -10,10 +10,16 @@ const router = Router();
 router.use(
   "/",
   proxyWithPathRewrite(CONFIG.DOCTOR_MANAGEMENT_SERVICE_URL, (path) => {
+    const gatewayBasePath = "/api/prescriptions";
     const [pathname, query] = path.split("?");
-    const suffix =
-      pathname === "/" || pathname === "" ? "" : pathname;
+
+    const strippedPath = pathname.startsWith(gatewayBasePath)
+      ? pathname.slice(gatewayBasePath.length)
+      : pathname;
+
+    const suffix = strippedPath === "/" || strippedPath === "" ? "" : strippedPath;
     const target = "/prescriptions" + suffix;
+
     return query ? `${target}?${query}` : target;
   }),
 );

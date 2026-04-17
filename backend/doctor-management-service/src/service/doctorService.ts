@@ -176,7 +176,20 @@ export class DoctorService {
 
   /** Internal call for billing data. */
   async getInternalBilling(doctorId: string) {
-    const d = await this.getProfile(doctorId);
+    const d = await this.doctors.findByDoctorId(doctorId);
+
+    if (!d) {
+      // Keep payment and notification flows resilient for historical appointments
+      // that may carry user-service IDs rather than doctor-profile IDs.
+      return {
+        doctorId,
+        userMongoId: doctorId,
+        consultationFee: 1000,
+        firstName: "",
+        lastName: "",
+      };
+    }
+
     return {
       doctorId: d.doctorId,
       userMongoId: d.email, // In this simplified repo, we use email as ID or it might be missing

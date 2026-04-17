@@ -21,7 +21,7 @@ export function AppointmentBookingExample({
   const [message, setMessage] = useState('');
   const [bookingData, setBookingData] = useState({
     patientId: userId,
-    doctorId: 'doc-123',
+    doctorId: '',
     appointmentDate: new Date().toISOString().split('T')[0],
     startTime: '10:00',
     endTime: '10:30',
@@ -58,7 +58,7 @@ export function AppointmentBookingExample({
             userId,
             userEmail,
             {
-              doctorName: 'Dr. Smith', // Get from doctor data
+              doctorName: bookingData.doctorId ? `Doctor (${bookingData.doctorId})` : 'Doctor',
               appointmentDate: bookingData.appointmentDate,
               appointmentTime: bookingData.startTime,
               appointmentType: bookingData.appointmentType,
@@ -79,7 +79,7 @@ export function AppointmentBookingExample({
         // Reset form
         setBookingData({
           patientId: userId,
-          doctorId: 'doc-123',
+          doctorId: '',
           appointmentDate: new Date().toISOString().split('T')[0],
           startTime: '10:00',
           endTime: '10:30',
@@ -120,6 +120,7 @@ export function AppointmentBookingExample({
             name="doctorId"
             value={bookingData.doctorId}
             onChange={handleInputChange}
+            required
             className="w-full px-3 py-2 border rounded-lg"
           />
         </div>

@@ -121,18 +121,29 @@ export default function DoctorPrescriptionsPage() {
       }
 
       try {
-        const [prescriptionData, appointmentData] = await Promise.all([
+        const [prescriptionResult, appointmentResult] = await Promise.allSettled([
           getDoctorPrescriptions(user.id),
           getDoctorAppointments(user.id, { status: 'all' }),
         ]);
 
-        setPrescriptions(prescriptionData);
-        setPaidAppointments(
-          appointmentData.filter(
-            (appointment) =>
-              appointment.status === 'confirmed' && appointment.paymentStatus === 'paid'
-          )
-        );
+        if (prescriptionResult.status === 'fulfilled') {
+          setPrescriptions(prescriptionResult.value);
+        } else {
+          setPrescriptions([]);
+          toast.error(getErrorMessage(prescriptionResult.reason, 'Failed to load prescription history.'));
+        }
+
+        if (appointmentResult.status === 'fulfilled') {
+          setPaidAppointments(
+            appointmentResult.value.filter(
+              (appointment) =>
+                appointment.status === 'confirmed' && appointment.paymentStatus === 'paid'
+            )
+          );
+        } else {
+          setPaidAppointments([]);
+          toast.error(getErrorMessage(appointmentResult.reason, 'Failed to load paid appointments.'));
+        }
       } catch (error: any) {
         toast.error(getErrorMessage(error, 'Failed to load prescription data.'));
       } finally {
