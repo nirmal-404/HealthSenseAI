@@ -80,10 +80,9 @@ export function BookAppointmentDialog({
       return;
     }
 
-    if (!doctorOptions.length) {
-      void onDoctorSearch('');
-    }
-  }, [open, doctorOptions.length, onDoctorSearch]);
+    // Reload when dialog opens so the picker reflects latest backend doctors.
+    void onDoctorSearch('');
+  }, [open, onDoctorSearch]);
 
   const selectedDoctorLabel = useMemo(
     () => doctorOptions.find((doctor) => doctor.id === selectedDoctorId)?.name,

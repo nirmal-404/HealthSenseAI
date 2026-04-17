@@ -7,6 +7,24 @@ const api = axios.create({
   withCredentials: true,
 });
 
+const isGenericAxiosMessage = (message?: string) =>
+  Boolean(message && /^Request failed with status code \d{3}$/i.test(message));
+
+const hasServiceMessage = (error: any) => {
+  const serviceMessage = error?.response?.data?.message || error?.response?.data?.error;
+  return typeof serviceMessage === 'string' && serviceMessage.trim().length > 0;
+};
+
+const sanitizeAxiosError = (error: any) => {
+  if (!error) {
+    return;
+  }
+
+  if (!hasServiceMessage(error) && isGenericAxiosMessage(error.message)) {
+    error.message = '';
+  }
+};
+
 // Request interceptor to add token
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
@@ -22,6 +40,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    sanitizeAxiosError(error);
+
     const originalRequest = error.config;
     const requestUrl = String(originalRequest?.url || '');
     const isAuthEndpoint =

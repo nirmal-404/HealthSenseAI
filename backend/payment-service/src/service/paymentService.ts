@@ -248,14 +248,14 @@ const getDoctorBillingData = async (doctorId: string): Promise<DoctorBillingData
 
     return billing;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === httpStatus.NOT_FOUND) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Doctor not found");
-    }
-
-    // Return graceful fallback if doctor service is unavailable
+    // Gracefully fallback when doctor profile is missing or service is unavailable.
+    // This keeps payment flow operational for historical appointments that may store
+    // user-service doctor IDs instead of doctor-profile IDs.
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
     console.warn(
-      `[payment-service] Failed to fetch doctor billing details for ${doctorId}, using fallback`
+      `[payment-service] Failed to fetch doctor billing details for ${doctorId} (status: ${status || "n/a"}), using fallback`
     );
+
     return {
       doctorId,
       userMongoId: "",
