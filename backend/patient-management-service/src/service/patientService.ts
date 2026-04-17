@@ -178,9 +178,15 @@ export const getPatientDashboardService = async (patientId: string) => {
 };
 
 export const getInternalPatientIdentityService = async (patientId: string) => {
-  const patient = await Patient.findOne({ patientId }).select(
+  let patient = await Patient.findOne({ patientId }).select(
     "patientId userMongoId firstName lastName email"
   );
+
+  if (!patient) {
+    patient = await Patient.findOne({ userMongoId: patientId }).select(
+      "patientId userMongoId firstName lastName email"
+    );
+  }
 
   if (!patient) {
     throw new ApiError(httpStatus.NOT_FOUND, "Patient not found");

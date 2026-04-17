@@ -34,9 +34,11 @@ export const decisionValidation = {
   params: Joi.object().keys({
     id: Joi.string().required(),
   }),
-  body: Joi.object().keys({
-    notes: Joi.string().allow(""),
-  }),
+  body: Joi.object()
+    .keys({
+      notes: Joi.string().allow(""),
+    })
+    .optional(),
 };
 
 export const byPatientValidation = {

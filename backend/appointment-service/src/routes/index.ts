@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  approveAppointmentController,
   bookAppointmentController,
   cancelAppointmentController,
   confirmAppointmentPaymentController,
@@ -13,9 +14,6 @@ import {
   rescheduleAppointmentController,
   updateInternalAppointmentPaymentStatusController,
 } from "../controller/appointmentController";
-import {
-  publishAppointmentBookedController,
-} from "../controller/testRabbitMQController";
 import { allowRoles } from "../middlewares/allowRoles";
 import { requireInternalServiceKey } from "../middlewares/requireInternalServiceKey";
 import requireAuth from "../middlewares/requireAuth";
@@ -127,19 +125,20 @@ router.put(
 );
 
 router.put(
+  "/:id/approve",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(decisionValidation),
+  approveAppointmentController
+);
+
+router.put(
   "/:id/reject",
   requireAuth,
   allowRoles("doctor", "admin"),
   validate(decisionValidation),
   rejectAppointmentController
 );
-
-// ==================== TEST ROUTES - RabbitMQ PRODUCER ====================
-// These routes are for testing the RabbitMQ message publishing functionality
-
-router.post("/test/publish-appointment-booked", publishAppointmentBookedController);
-
-// =========================================================================
 
 router.get("/health", (req, res) => {
   res.json({ status: "UP", code: 200 });
