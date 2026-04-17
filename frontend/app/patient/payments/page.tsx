@@ -296,10 +296,9 @@ export default function PatientPaymentsPage() {
       : formatFeeAsCurrency(0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <div className="space-y-6 p-4 md:p-6 lg:p-8">
-
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6 lg:p-8">
+      <div className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <Card className="border border-slate-200 bg-white shadow-md">
           <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
             <div className="flex items-center gap-2">
