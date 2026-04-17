@@ -217,13 +217,13 @@ export default function PatientAppointmentsPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <div className="space-y-4 p-3 md:p-4 lg:p-5">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <Button
             type="button"
-            className="h-11 rounded-lg bg-blue-600 px-6 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200"
+            className="h-10 rounded-lg bg-blue-600 px-5 text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow"
             onClick={() => setBookDialogOpen(true)}
             disabled={!user?.id}
           >
@@ -246,35 +246,35 @@ export default function PatientAppointmentsPage() {
 
       {/* Appointments List */}
       {loadingList ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {[0, 1, 2, 3].map((index) => (
             <div
               key={`appointment-skeleton-${index}`}
-              className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse"
+              className="animate-pulse rounded-lg border border-slate-200 bg-white p-4"
             >
-              <div className="space-y-4">
-                <div className="h-6 w-40 bg-slate-200 rounded" />
+              <div className="space-y-3">
+                <div className="h-5 w-36 bg-slate-200 rounded" />
                 <div className="h-4 w-full bg-slate-100 rounded" />
-                <div className="h-20 w-full bg-slate-100 rounded" />
-                <div className="h-10 w-full bg-slate-100 rounded" />
+                <div className="h-16 w-full bg-slate-100 rounded" />
+                <div className="h-8 w-full bg-slate-100 rounded" />
               </div>
             </div>
           ))}
         </div>
       ) : appointments.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 p-12 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-blue-100 p-4">
-              <CalendarCheck2 className="h-8 w-8 text-blue-600" />
+        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 p-8 text-center">
+          <div className="mb-3 flex justify-center">
+            <div className="rounded-full bg-blue-100 p-3">
+              <CalendarCheck2 className="h-7 w-7 text-blue-600" />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">No Appointments Found</h3>
-          <p className="text-slate-600 mb-6 max-w-md mx-auto">
+          <h3 className="mb-1 text-lg font-semibold text-slate-900">No Appointments Found</h3>
+          <p className="mx-auto mb-5 max-w-md text-slate-600">
             You don't have any appointments yet. Start by booking your first appointment with a healthcare provider.
           </p>
           <Button
             type="button"
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+            className="h-9 rounded-lg bg-blue-600 px-5 text-white hover:bg-blue-700"
             onClick={() => setBookDialogOpen(true)}
             disabled={!user?.id}
           >
@@ -283,7 +283,7 @@ export default function PatientAppointmentsPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {paginatedAppointments.map((appointment) => (
               <AppointmentCard
                 key={appointment.appointmentId}
@@ -298,7 +298,7 @@ export default function PatientAppointmentsPage() {
 
           {/* Pagination */}
           {totalPages > 1 ? (
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:flex-row md:items-center md:justify-between">
               <p className="text-sm text-slate-600">
                 Showing <span className="font-semibold text-slate-900">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
                 <span className="font-semibold text-slate-900">

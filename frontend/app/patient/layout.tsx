@@ -185,7 +185,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             </div>
           </aside>
 
-          <section className="h-full flex-1 overflow-y-auto">
+          <section className="flex h-full flex-1 flex-col overflow-hidden">
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6edf8] bg-white px-4 py-4 md:px-6 lg:px-8">
               <div>
                 <h1 className="text-xl font-semibold text-[#1d2944]">{pageTitle}</h1>
@@ -294,7 +294,9 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               </div>
             </div>
 
-            {children}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {children}
+            </div>
           </section>
         </div>
       </main>

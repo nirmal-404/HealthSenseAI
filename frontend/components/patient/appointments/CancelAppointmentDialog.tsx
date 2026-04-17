@@ -72,12 +72,6 @@ export function CancelAppointmentDialog({
                     {appointment.startTime} - {appointment.endTime}
                   </span>
                 </p>
-                <p>
-                  <span className="font-semibold text-slate-900">ID:</span>{' '}
-                  <span className="text-slate-600 font-mono text-xs">
-                    {appointment.appointmentId.slice(0, 12)}...
-                  </span>
-                </p>
               </div>
             </div>
           )}

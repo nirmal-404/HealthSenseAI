@@ -298,15 +298,6 @@ export default function PatientPaymentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="space-y-6 p-4 md:p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Payment Center</h1>
-            <p className="mt-1 text-slate-600">Manage your appointments and complete payments securely</p>
-          </div>
-          <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-            <CreditCard className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <Card className="border border-slate-200 bg-white shadow-md">
@@ -387,10 +378,7 @@ export default function PatientPaymentsPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <p className="text-xs text-slate-400">
-                        ID: {appointment.appointmentId.slice(0, 8)}...
-                      </p>
+                    <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-3">
                       <Button
                         type="button"
                         size="sm"

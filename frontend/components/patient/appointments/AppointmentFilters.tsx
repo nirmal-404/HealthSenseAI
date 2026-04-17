@@ -43,22 +43,22 @@ export function AppointmentFilters({
   const hasFilters = status !== 'all' || date !== '';
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-      <div className="flex flex-col gap-4 lg:gap-0">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-3">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="mb-3 flex items-center gap-2">
           <Filter className="h-4 w-4 text-slate-600" />
-          <h3 className="font-semibold text-slate-900">Filter Appointments</h3>
+          <h3 className="text-base font-semibold text-slate-900">Filter Appointments</h3>
         </div>
 
         {/* Filters grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mb-4">
+        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
               Status
             </label>
             <Select value={status} onValueChange={(value) => onStatusChange(value as AppointmentStatusFilter)}>
-              <SelectTrigger className="h-10 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500">
+              <SelectTrigger className="h-9 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -72,14 +72,14 @@ export function AppointmentFilters({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
               Appointment Date
             </label>
             <Input
               type="date"
               value={date}
               onChange={(event) => onDateChange(event.target.value)}
-              className="h-10 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500"
+              className="h-9 rounded-lg border-slate-300 bg-white text-slate-900 hover:border-slate-400 focus:ring-blue-500"
             />
           </div>
         </div>

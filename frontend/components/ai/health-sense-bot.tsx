@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Send, X, MessageSquare, Loader2, AlertTriangle, CheckCircle2, 
-  Info, ChevronDown, History, Plus, Sparkles, TrendingUp, FileDown,
-  Brain, Heart, Zap
+  Info, ChevronDown, History, Plus, Sparkles, TrendingUp,
+  Brain, Heart, Zap, Stethoscope, Pill, CalendarDays, Activity, ArrowUpRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -31,11 +31,45 @@ type HealthSenseBotProps = {
 const initialBotMessage: Message = {
   id: '1',
   role: 'bot',
-  content: "Hello! I'm your HealthSense AI assistant. Describe your symptoms (e.g., 'I have a headache since 2 days'), and I'll help analyze them.",
+  content: "Hi! I'm your HealthSense AI assistant. Ask about symptoms, medications, appointments, or wellness and I'll help you get started.",
 };
 
+type PromptCard = {
+  title: string;
+  description: string;
+  prompt: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const promptCards: PromptCard[] = [
+  {
+    title: 'Symptom Check',
+    description: 'What should I do about a headache and fever for two days?',
+    prompt: 'I have had a headache and fever for two days. What should I do?',
+    icon: Stethoscope,
+  },
+  {
+    title: 'Medication Safety',
+    description: 'Can I take ibuprofen with my current medications?',
+    prompt: 'Can I take ibuprofen with my current medications?',
+    icon: Pill,
+  },
+  {
+    title: 'Appointment Help',
+    description: 'Help me book a dermatologist appointment this week.',
+    prompt: 'Help me book a dermatologist appointment this week.',
+    icon: CalendarDays,
+  },
+  {
+    title: 'Wellness Plan',
+    description: 'Create a 7-day plan to improve sleep and energy.',
+    prompt: 'Create a 7-day plan to improve sleep and energy.',
+    icon: Activity,
+  },
+];
+
 export default function HealthSenseBot({ mode = 'popup', className }: HealthSenseBotProps) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const isAiAssistancePage = pathname.startsWith('/patient/ai-assistance');
@@ -55,16 +89,18 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
   const [currentAnalysis, setCurrentAnalysis] = useState<any>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const displayName = user ? `${user.firstName} ${user.lastName || ''}`.trim() : '';
+  const isIntro = !isPopupMode && view === 'chat' && messages.length === 0 && !currentAnalysis;
 
   useEffect(() => {
-    setMessages([initialBotMessage]);
-  }, []);
+    setMessages(isPopupMode ? [initialBotMessage] : []);
+  }, [isPopupMode]);
 
   useEffect(() => {
-    if (scrollRef.current && view === 'chat') {
+    if (scrollRef.current && view === 'chat' && !isIntro) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, view]);
+  }, [messages, isLoading, view, isIntro]);
 
   useEffect(() => {
     if ((isOpen || !isPopupMode) && view === 'history') {
@@ -85,7 +121,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
   };
 
   const resetChat = () => {
-    setMessages([initialBotMessage]);
+    setMessages(isPopupMode ? [initialBotMessage] : []);
     setInputValue('');
     setCurrentCheckId(null);
     setFollowUpQuestions([]);
@@ -97,6 +133,10 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
 
   if (loading || !isAuthenticated || isAuthPage) return null;
   if (isPopupMode && isAiAssistancePage) return null;
+
+  const handlePromptClick = (prompt: string) => {
+    setInputValue(prompt);
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -335,24 +375,69 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
     );
   };
 
+  const IntroView = () => (
+    <div className="relative h-full w-full bg-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_450px_at_50%_-10%,rgba(37,99,235,0.08),rgba(255,255,255,0))]" />
+      <div className="relative z-10 flex h-full flex-col justify-between px-6 py-8 text-center">
+        <div className="mx-auto max-w-3xl space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-500">
+            HealthSense AI Assistant
+          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl lg:text-4xl">
+            {displayName ? (
+              <>
+                Hi there, <span className="text-blue-600">{displayName}</span>. How can HealthSense help you today?
+              </>
+            ) : (
+              <>Hi there. How can HealthSense help you today?</>
+            )}
+          </h1>
+          <p className="text-sm text-slate-600 sm:text-base">
+            Get instant guidance on symptoms, medications, appointments, and wellness. Choose a topic below or start a conversation.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
+          {promptCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <button
+                key={card.title}
+                type="button"
+                onClick={() => handlePromptClick(card.prompt)}
+                className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-slate-900">{card.title}</p>
+                <p className="mt-1 text-xs text-slate-600">{card.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   const chatWindow = (
     <Card
       className={cn(
-        'flex flex-col overflow-hidden bg-white shadow-2xl border-0',
-        isPopupMode ? 'mb-4 h-[600px] w-[400px]' : 'h-full w-full shadow-lg'
+        'relative flex flex-col overflow-hidden border-0 ring-0 gap-0',
+        isPopupMode
+          ? 'mb-4 h-[600px] w-[400px] bg-white shadow-2xl'
+          : cn('h-full w-full py-0 px-0', isIntro ? 'bg-white shadow-none' : 'bg-white shadow-lg')
       )}
     >
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 text-white flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-white/20 p-2">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="font-bold text-base">HealthSense AI</h1>
-            <p className="text-xs text-blue-100">Health analysis powered by AI</p>
-          </div>
-        </div>
-        {isPopupMode && (
+      {isIntro && !isPopupMode && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white" />
+      )}
+
+      {isPopupMode && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 text-white flex items-center justify-between">
           <Button
             variant="ghost"
             size="icon"
@@ -361,62 +446,69 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
           >
             <X className="h-4 w-4" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <CardContent ref={scrollRef} className="flex-1 overflow-y-auto p-5 bg-slate-50">
+      <CardContent
+        ref={scrollRef}
+        className={cn('relative z-10 flex-1 overflow-hidden', isIntro ? 'p-0' : 'p-5 bg-slate-50')}
+      >
         {view === 'chat' ? (
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                {msg.role === 'user' ? (
-                  <div className="flex justify-end">
-                    <div className="max-w-xs rounded-2xl rounded-tr-none bg-blue-600 px-4 py-2 text-white text-sm">
-                      {msg.content}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-start">
-                    <div className="max-w-xs space-y-2">
-                      <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-2 text-slate-900 text-sm shadow-sm">
+          isIntro ? (
+            <IntroView />
+          ) : (
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id}>
+                  {msg.role === 'user' ? (
+                    <div className="flex justify-end">
+                      <div className="max-w-xs rounded-2xl rounded-tr-none bg-blue-600 px-4 py-2 text-white text-sm">
                         {msg.content}
                       </div>
-
-                      {msg.type === 'follow-up' && (
-                        <form onSubmit={handleFollowUpSubmit} className="mt-3 space-y-3 bg-white rounded-lg p-3 border border-slate-200">
-                          {msg.data.map((q: string, i: number) => (
-                            <div key={i} className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-700">{q}</label>
-                              <Input
-                                placeholder="Your answer..."
-                                className="text-sm"
-                                onChange={(e) => setAnswers((prev) => ({ ...prev, [q]: e.target.value }))}
-                                required
-                              />
-                            </div>
-                          ))}
-                          <Button type="submit" size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                            Submit
-                          </Button>
-                        </form>
-                      )}
-
-                      {msg.type === 'analysis' && <AnalysisView />}
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <div className="flex justify-start">
+                      <div className="max-w-xs space-y-2">
+                        <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-2 text-slate-900 text-sm shadow-sm">
+                          {msg.content}
+                        </div>
 
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-3 shadow-sm flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                  <span className="text-sm text-slate-600">Analyzing...</span>
+                        {msg.type === 'follow-up' && (
+                          <form onSubmit={handleFollowUpSubmit} className="mt-3 space-y-3 bg-white rounded-lg p-3 border border-slate-200">
+                            {msg.data.map((q: string, i: number) => (
+                              <div key={i} className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-700">{q}</label>
+                                <Input
+                                  placeholder="Your answer..."
+                                  className="text-sm"
+                                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q]: e.target.value }))}
+                                  required
+                                />
+                              </div>
+                            ))}
+                            <Button type="submit" size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                              Submit
+                            </Button>
+                          </form>
+                        )}
+
+                        {msg.type === 'analysis' && <AnalysisView />}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
+
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-tl-none bg-white border border-slate-200 px-4 py-3 shadow-sm flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                    <span className="text-sm text-slate-600">Analyzing...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-3">
@@ -480,11 +572,27 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
       </CardContent>
 
       {view === 'chat' && !currentAnalysis && (
-        <div className="border-t border-slate-200 bg-white p-4">
+        <div
+          className={cn(
+            'p-3 flex-shrink-0',
+            isIntro
+              ? 'border-t border-slate-200 bg-white/95 backdrop-blur'
+              : 'border-t border-slate-200 bg-white'
+          )}
+        >
           <div className="relative">
             <Input
-              placeholder="Ask your health question..."
-              className="rounded-full border-slate-300 bg-slate-100 pr-12 py-6"
+              placeholder={
+                isIntro
+                  ? 'Describe your symptoms or ask a health question...'
+                  : 'Ask your health question...'
+              }
+              className={cn(
+                'rounded-full pr-12 py-6',
+                isIntro
+                  ? 'border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500/50'
+                  : 'border-slate-300 bg-slate-100'
+              )}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -497,13 +605,21 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
             />
             <Button
               size="icon"
-              className="absolute right-1.5 top-1.5 h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+              className={cn(
+                'absolute right-1.5 top-1.5 h-8 w-8 rounded-full text-white',
+                'bg-blue-600 hover:bg-blue-700'
+              )}
               onClick={() => void handleSend()}
               disabled={isLoading || !inputValue.trim()}
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
+          {isIntro && (
+            <p className="mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Powered by HealthSense AI
+            </p>
+          )}
         </div>
       )}
 
