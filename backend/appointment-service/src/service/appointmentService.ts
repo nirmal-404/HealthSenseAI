@@ -395,6 +395,36 @@ export const rejectAppointmentService = async (
   return appointment;
 };
 
+export const reopenAppointmentService = async (
+  appointmentId: string,
+  changedBy: string,
+  notes?: string
+) => {
+  const appointment = await Appointment.findOne({ appointmentId });
+
+  if (!appointment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Appointment not found");
+  }
+
+  if (appointment.status !== "rejected") {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Only rejected appointments can be moved back to pending"
+    );
+  }
+
+  appointment.status = "pending";
+  await appointment.save();
+  await pushHistory(
+    appointment.appointmentId,
+    "pending",
+    changedBy,
+    notes || "Rejected appointment moved back to pending"
+  );
+
+  return appointment;
+};
+
 const buildQuery = (baseFilter: Record<string, string>, filter: AppointmentQueryFilter) => {
   const query: Record<string, any> = { ...baseFilter };
 

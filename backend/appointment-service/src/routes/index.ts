@@ -10,6 +10,7 @@ import {
   getAppointmentsByDoctorController,
   getAppointmentsByPatientController,
   getAppointmentStatusController,
+  reopenAppointmentController,
   rejectAppointmentController,
   rescheduleAppointmentController,
   updateInternalAppointmentPaymentStatusController,
@@ -138,6 +139,14 @@ router.put(
   allowRoles("doctor", "admin"),
   validate(decisionValidation),
   rejectAppointmentController
+);
+
+router.put(
+  "/:id/reopen",
+  requireAuth,
+  allowRoles("doctor", "admin"),
+  validate(decisionValidation),
+  reopenAppointmentController
 );
 
 router.get("/health", (req, res) => {

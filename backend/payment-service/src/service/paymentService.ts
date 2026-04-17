@@ -25,6 +25,8 @@ type AppointmentForPayment = {
   patientId: string;
   doctorId: string;
   appointmentDate: Date | string;
+  startTime?: string;
+  endTime?: string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "rejected";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   appointmentType?: "video" | "in-person";
@@ -99,6 +101,102 @@ const getAppointmentForPayment = async (appointmentId: string): Promise<Appointm
   }
 };
 
+const buildDisplayName = (firstName?: string, lastName?: string): string =>
+  [firstName || "", lastName || ""].filter(Boolean).join(" ").trim();
+
+const safeResolveDoctorName = async (
+  doctorId: string,
+  preferredName?: string
+): Promise<string | undefined> => {
+  if (preferredName) {
+    return preferredName;
+  }
+
+  try {
+    const doctorBilling = await getDoctorBillingData(doctorId);
+    const resolved = buildDisplayName(doctorBilling.firstName, doctorBilling.lastName);
+    return resolved || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const safeResolvePatientName = async (
+  patientId: string,
+  preferredName?: string
+): Promise<string | undefined> => {
+  if (preferredName) {
+    return preferredName;
+  }
+
+  try {
+    const patientIdentity = await getPatientIdentityData(patientId);
+    const resolved = buildDisplayName(
+      patientIdentity.firstName,
+      patientIdentity.lastName
+    );
+    return resolved || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const provisionTelemedicineSessionIfEligible = async (input: {
+  appointmentId: string;
+  source: string;
+  appointmentSnapshot?: AppointmentForPayment;
+  doctorName?: string;
+  patientName?: string;
+}) => {
+  try {
+    const appointment =
+      input.appointmentSnapshot ||
+      (await getAppointmentForPayment(input.appointmentId));
+
+    if (
+      appointment.status !== "confirmed" ||
+      appointment.paymentStatus !== "paid" ||
+      appointment.appointmentType !== "video"
+    ) {
+      return;
+    }
+
+    const [doctorName, patientName] = await Promise.all([
+      safeResolveDoctorName(appointment.doctorId, input.doctorName),
+      safeResolvePatientName(appointment.patientId, input.patientName),
+    ]);
+
+    await axios.post(
+      `${CONFIG.TELEMEDICINE_SERVICE_URL}/sessions/create`,
+      {
+        doctorId: appointment.doctorId,
+        patientId: appointment.patientId,
+        appointmentId: appointment.appointmentId,
+        appointmentType: "video",
+        appointmentDate: appointment.appointmentDate,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        consultationFee: appointment.consultationFee,
+        doctorName,
+        patientName,
+      },
+      { headers: internalHeaders, timeout: 5000 }
+    );
+
+    console.log(
+      `[payment-service] Telemedicine session provisioned from ${input.source} for appointment ${appointment.appointmentId}`
+    );
+  } catch (error: any) {
+    const errorDetails = axios.isAxiosError(error)
+      ? `${error.response?.status || "n/a"} ${error.response?.data?.message || error.message}`
+      : String(error);
+
+    console.warn(
+      `[payment-service] Telemedicine provisioning skipped for appointment ${input.appointmentId} (${input.source}): ${errorDetails}`
+    );
+  }
+};
+
 const confirmAppointmentPayment = async (
   appointmentId: string,
   paymentId: string,
@@ -150,14 +248,14 @@ const getDoctorBillingData = async (doctorId: string): Promise<DoctorBillingData
 
     return billing;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === httpStatus.NOT_FOUND) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Doctor not found");
-    }
-
-    // Return graceful fallback if doctor service is unavailable
+    // Gracefully fallback when doctor profile is missing or service is unavailable.
+    // This keeps payment flow operational for historical appointments that may store
+    // user-service doctor IDs instead of doctor-profile IDs.
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
     console.warn(
-      `[payment-service] Failed to fetch doctor billing details for ${doctorId}, using fallback`
+      `[payment-service] Failed to fetch doctor billing details for ${doctorId} (status: ${status || "n/a"}), using fallback`
     );
+
     return {
       doctorId,
       userMongoId: "",
@@ -492,6 +590,17 @@ export const processAppointmentPaymentService = async (
     payment.transactionId = `MOCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     payment.completedAt = new Date();
     await payment.save();
+
+    await provisionTelemedicineSessionIfEligible({
+      appointmentId,
+      source: "direct-payment",
+      appointmentSnapshot: {
+        ...appointment,
+        paymentStatus: "paid",
+      },
+      doctorName: buildDisplayName(doctorBilling.firstName, doctorBilling.lastName) || undefined,
+      patientName: buildDisplayName(patientIdentity.firstName, patientIdentity.lastName) || undefined,
+    });
   } catch (error) {
     payment.status = "failed";
     payment.failureReason = "Failed to sync appointment payment status";
@@ -575,7 +684,39 @@ export const confirmStripePaymentService = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Stripe payment intent is missing");
   }
 
-  if (!["success", "completed", "refunded"].includes(payment.status)) {
+  if (["success", "completed"].includes(payment.status)) {
+    await provisionTelemedicineSessionIfEligible({
+      appointmentId: payment.appointmentId,
+      source: "stripe-confirm-retry",
+      doctorName:
+        buildDisplayName(payment.doctorFirstName, payment.doctorLastName) ||
+        undefined,
+    });
+
+    return {
+      paymentId: payment.paymentId,
+      appointmentId: payment.appointmentId,
+      status: payment.status,
+      normalizedStatus: getNormalizedStatus(payment.status),
+      amount: payment.amount,
+      currency: payment.currency,
+      updatedAt: payment.updatedAt,
+    };
+  }
+
+  if (payment.status === "refunded") {
+    return {
+      paymentId: payment.paymentId,
+      appointmentId: payment.appointmentId,
+      status: payment.status,
+      normalizedStatus: getNormalizedStatus(payment.status),
+      amount: payment.amount,
+      currency: payment.currency,
+      updatedAt: payment.updatedAt,
+    };
+  }
+
+  if (payment.status !== "success" && payment.status !== "completed") {
     const stripe = getStripeClient();
     const paymentIntent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
 
@@ -592,6 +733,14 @@ export const confirmStripePaymentService = async (
         "success",
         "Payment confirmed by client"
       );
+
+      await provisionTelemedicineSessionIfEligible({
+        appointmentId: payment.appointmentId,
+        source: "stripe-confirm",
+        doctorName:
+          buildDisplayName(payment.doctorFirstName, payment.doctorLastName) ||
+          undefined,
+      });
     } else if (
       paymentIntent.status === "canceled" ||
       paymentIntent.status === "requires_payment_method"
@@ -767,7 +916,16 @@ const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.PaymentIntent)
     return;
   }
 
-  if (["success", "completed", "refunded"].includes(payment.status)) {
+  if (["success", "completed"].includes(payment.status)) {
+    await provisionTelemedicineSessionIfEligible({
+      appointmentId: payment.appointmentId,
+      source: "stripe-webhook-retry",
+      doctorName: buildDisplayName(payment.doctorFirstName, payment.doctorLastName) || undefined,
+    });
+    return;
+  }
+
+  if (payment.status === "refunded") {
     return;
   }
 
@@ -783,6 +941,12 @@ const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.PaymentIntent)
     "success",
     "Payment confirmed by Stripe webhook"
   );
+
+  await provisionTelemedicineSessionIfEligible({
+    appointmentId: payment.appointmentId,
+    source: "stripe-webhook",
+    doctorName: buildDisplayName(payment.doctorFirstName, payment.doctorLastName) || undefined,
+  });
 
   console.log(
     `[payment-service] Payment ${payment.paymentId} marked successful via Stripe webhook`

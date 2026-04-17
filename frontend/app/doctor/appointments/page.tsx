@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,10 +11,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Pill,
   Stethoscope,
   Video,
 } from 'lucide-react';
-import { approveAppointment, getDoctorAppointments } from '@/lib/appointments.api';
+import { approveAppointment, getDoctorAppointments, rejectAppointment, reopenAppointment } from '@/lib/appointments.api';
 import type { Appointment } from '@/lib/appointments.types';
 import {
   formatAppointmentDate,
@@ -88,6 +90,7 @@ const getErrorMessage = (error: any, fallback: string) =>
 
 export default function DoctorAppointmentsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const today = new Date();
   const todayKey = toDateKey(today);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -128,6 +131,11 @@ export default function DoctorAppointmentsPage() {
 
   const approvedAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.status === 'confirmed'),
+    [appointments]
+  );
+
+  const declinedAppointments = useMemo(
+    () => appointments.filter((appointment) => appointment.status === 'rejected'),
     [appointments]
   );
 
@@ -212,10 +220,61 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
+  const handleDecline = async (appointmentId: string) => {
+    setActionLoadingById((prev) => ({ ...prev, [appointmentId]: true }));
+
+    try {
+      await rejectAppointment(appointmentId);
+      toast.success('Appointment declined successfully.');
+      setAppointments((prev) =>
+        prev.map((appointment) =>
+          appointment.appointmentId === appointmentId
+            ? { ...appointment, status: 'rejected' }
+            : appointment
+        )
+      );
+      void fetchAppointments();
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to decline appointment.'));
+    } finally {
+      setActionLoadingById((prev) => ({ ...prev, [appointmentId]: false }));
+    }
+  };
+
+  const handleEditDeclined = async (appointmentId: string) => {
+    setActionLoadingById((prev) => ({ ...prev, [appointmentId]: true }));
+
+    try {
+      await reopenAppointment(appointmentId, 'Doctor reopened declined appointment for edits');
+      toast.success('Appointment moved back to pending for editing.');
+      setAppointments((prev) =>
+        prev.map((appointment) =>
+          appointment.appointmentId === appointmentId
+            ? { ...appointment, status: 'pending' }
+            : appointment
+        )
+      );
+      void fetchAppointments();
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to edit declined appointment.'));
+    } finally {
+      setActionLoadingById((prev) => ({ ...prev, [appointmentId]: false }));
+    }
+  };
+
+  const handleCreatePrescription = (appointment: Appointment) => {
+    const query = new URLSearchParams({
+      appointmentId: appointment.appointmentId,
+      patientId: appointment.patientId,
+    });
+
+    router.push(`/doctor/prescriptions?${query.toString()}`);
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <section className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        <section className="order-3 space-y-4 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-[#1f2a44]">Pending Appointments</h2>
@@ -275,6 +334,14 @@ export default function DoctorAppointmentsPage() {
                           Pending
                         </span>
                         <Button
+                          variant="outline"
+                          className="h-8 rounded-lg border-rose-200 px-3 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          onClick={() => void handleDecline(appointment.appointmentId)}
+                          disabled={isApproving}
+                        >
+                          {isApproving ? 'Updating...' : 'Decline'}
+                        </Button>
+                        <Button
                           className="h-8 rounded-lg bg-[#2f58db] px-3 text-xs text-white hover:bg-[#2446b8]"
                           onClick={() => void handleApprove(appointment.appointmentId)}
                           disabled={isApproving}
@@ -309,7 +376,7 @@ export default function DoctorAppointmentsPage() {
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className="order-2 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-[#1f2a44]">Approved Appointments</h2>
@@ -374,6 +441,16 @@ export default function DoctorAppointmentsPage() {
                         >
                           {formatStatusLabel(appointment.paymentStatus)}
                         </span>
+                        {appointment.paymentStatus === 'paid' ? (
+                          <Button
+                            variant="outline"
+                            className="h-8 rounded-lg border-[#2f58db] px-3 text-xs text-[#2f58db] hover:bg-[#eef4ff] hover:text-[#2446b8]"
+                            onClick={() => handleCreatePrescription(appointment)}
+                          >
+                            <Pill className="mr-1 h-3.5 w-3.5" />
+                            Create Prescription
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
 
@@ -400,9 +477,104 @@ export default function DoctorAppointmentsPage() {
               </div>
             )}
           </div>
+
+          <div className="mt-6 border-t border-slate-200 pt-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[#1f2a44]">Declined Appointments</h3>
+                <p className="text-xs text-slate-500">Review declined requests and move them back to pending to edit.</p>
+              </div>
+              <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                {declinedAppointments.length} declined
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {loading ? (
+                <div className="rounded-2xl border border-dashed border-[#dce5f4] bg-white p-6 text-sm text-slate-500">
+                  Loading declined appointments...
+                </div>
+              ) : declinedAppointments.length ? (
+                declinedAppointments.map((appointment) => {
+                  const patientName = appointment.patientName?.trim();
+                  const initials = patientName
+                    ? patientName
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join('')
+                        .toUpperCase()
+                    : appointment.patientId
+                      ? appointment.patientId.slice(0, 2).toUpperCase()
+                      : 'PT';
+                  const patientLabel = patientName
+                    ? patientName
+                    : appointment.patientId
+                      ? `Patient ${appointment.patientId.slice(0, 6)}`
+                      : 'Patient';
+                  const reason = appointment.symptoms?.trim() || 'Declined appointment request';
+                  const TypeIcon = appointment.appointmentType === 'video' ? Video : Stethoscope;
+                  const isUpdating = Boolean(actionLoadingById[appointment.appointmentId]);
+
+                  return (
+                    <article
+                      key={`declined-${appointment.appointmentId}`}
+                      className="rounded-2xl border border-rose-200 bg-rose-50/30 p-4 shadow-[0_10px_24px_rgba(45,90,180,0.06)]"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-bold text-rose-700 ring-1 ring-rose-200">
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="text-base font-semibold text-[#1f2a44]">{patientLabel}</p>
+                            <p className="text-xs text-slate-500">{reason}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                            Declined
+                          </span>
+                          <Button
+                            variant="outline"
+                            className="h-8 rounded-lg border-[#2f58db] px-3 text-xs text-[#2f58db] hover:bg-[#eef4ff] hover:text-[#2446b8]"
+                            onClick={() => void handleEditDeclined(appointment.appointmentId)}
+                            disabled={isUpdating}
+                          >
+                            {isUpdating ? 'Updating...' : 'Edit'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarDays className="h-3.5 w-3.5 text-[#315ae7]" />
+                          {formatAppointmentDate(appointment.appointmentDate)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-[#f0b344]" />
+                          {formatAppointmentTimeRange(appointment.startTime, appointment.endTime)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <TypeIcon className="h-3.5 w-3.5 text-[#2f58db]" />
+                          {formatStatusLabel(appointment.appointmentType)}
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[#dce5f4] bg-white p-6 text-sm text-slate-500">
+                  No declined appointments.
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
-        <aside className="space-y-4">
+        <aside className="order-1 space-y-4">
           <Card className="border border-[#e2eaf6] bg-white shadow-[0_10px_24px_rgba(45,90,180,0.07)]">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>

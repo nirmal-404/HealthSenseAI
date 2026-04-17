@@ -12,6 +12,10 @@ export class SessionRepository {
     return SessionModel.findOne({ sessionId });
   }
 
+  async findByAppointmentId(appointmentId: string): Promise<ISession | null> {
+    return SessionModel.findOne({ appointmentId });
+  }
+
   async updateBySessionId(
     sessionId: string,
     patch: Partial<ISession>,
@@ -33,6 +37,22 @@ export class SessionRepository {
         .skip(skip)
         .limit(limit),
       SessionModel.countDocuments({ doctorId }),
+    ]);
+    return { items, total };
+  }
+
+  async listByPatient(
+    patientId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: ISession[]; total: number }> {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      SessionModel.find({ patientId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      SessionModel.countDocuments({ patientId }),
     ]);
     return { items, total };
   }

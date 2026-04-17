@@ -79,6 +79,7 @@ export interface DoctorRecord {
   lastName?: string;
   name?: string;
   specialization?: string;
+  speciality?: string;
   email?: string;
 }
 

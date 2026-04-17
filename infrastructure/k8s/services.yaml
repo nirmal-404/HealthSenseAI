@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+spec:
+  selector:
+    app: kibana
+  ports:
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - protocol: TCP
+      port: 50000
+      targetPort: 50000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-management-service
+spec:
+  selector:
+    app: admin-management-service
+  ports:
+    - protocol: TCP
+      port: 50001
+      targetPort: 50001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-symptom-checker-service
+spec:
+  selector:
+    app: ai-symptom-checker-service
+  ports:
+    - protocol: TCP
+      port: 50002
+      targetPort: 50002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+spec:
+  selector:
+    app: appointment-service
+  ports:
+    - protocol: TCP
+      port: 50003
+      targetPort: 50003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doctor-management-service
+spec:
+  selector:
+    app: doctor-management-service
+  ports:
+    - protocol: TCP
+      port: 50004
+      targetPort: 50004
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - protocol: TCP
+      port: 50005
+      targetPort: 50005
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-management-service
+spec:
+  selector:
+    app: patient-management-service
+  ports:
+    - protocol: TCP
+      port: 50006
+      targetPort: 50006
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - protocol: TCP
+      port: 50007
+      targetPort: 50007
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemedicine-service
+spec:
+  selector:
+    app: telemedicine-service
+  ports:
+    - protocol: TCP
+      port: 50008
+      targetPort: 50008
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 50009
+      targetPort: 50009
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  selector:
+    app: nginx
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

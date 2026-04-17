@@ -30,7 +30,7 @@ const normalizeDoctorOption = (doctor: DoctorRecord): DoctorOption | null => {
   return {
     id,
     name: fullName || doctor.name || `Doctor ${id.slice(0, 6)}`,
-    specialization: doctor.specialization,
+    specialization: doctor.specialization || doctor.speciality,
     email: doctor.email,
   };
 };
@@ -124,6 +124,20 @@ export async function approveAppointment(appointmentId: string, notes?: string):
   return unwrap(response);
 }
 
+export async function rejectAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/reject`, {
+    notes: notes ?? '',
+  });
+  return unwrap(response);
+}
+
+export async function reopenAppointment(appointmentId: string, notes?: string): Promise<Appointment> {
+  const response = await api.put<ApiEnvelope<Appointment>>(`/appointments/${appointmentId}/reopen`, {
+    notes: notes ?? '',
+  });
+  return unwrap(response);
+}
+
 export async function searchDoctors(params: DoctorSearchParams = {}): Promise<DoctorOption[]> {
   const query: Record<string, string> = {};
 
@@ -135,26 +149,57 @@ export async function searchDoctors(params: DoctorSearchParams = {}): Promise<Do
     query.limit = String(params.limit);
   }
 
+  const doctorServiceParams = {
+    ...query,
+    ...(params.specialty?.trim() ? { specialty: params.specialty.trim() } : {}),
+  };
+
   try {
-    const response = await api.get<ApiEnvelope<DoctorRecord[]>>('/auth/doctors', {
+    // Primary source: user-service doctors list (historically complete/canonical for booking).
+    const authResponse = await api.get<ApiEnvelope<DoctorRecord[]>>('/auth/doctors', {
       params: query,
     });
 
-    const doctors = unwrap(response) || [];
-    return doctors
+    const authDoctors = (unwrap(authResponse) || [])
       .map(normalizeDoctorOption)
       .filter((doctor): doctor is DoctorOption => Boolean(doctor));
+
+    // Secondary source: doctor profile search for specialization enrichment only.
+    // We do not surface profile-only records to avoid stale/unlinked profile entries.
+    try {
+      const profileResponse = await api.get<ApiEnvelope<DoctorRecord[]>>('/doctors/search', {
+        params: doctorServiceParams,
+      });
+
+      const profileDoctors = (unwrap(profileResponse) || [])
+        .map(normalizeDoctorOption)
+        .filter((doctor): doctor is DoctorOption => Boolean(doctor));
+
+      const specializationByEmail = new Map<string, string>();
+      profileDoctors.forEach((doctor) => {
+        const email = (doctor.email || '').trim().toLowerCase();
+        if (email && doctor.specialization) {
+          specializationByEmail.set(email, doctor.specialization);
+        }
+      });
+
+      return authDoctors.map((doctor) => {
+        const email = (doctor.email || '').trim().toLowerCase();
+        return {
+          ...doctor,
+          specialization: doctor.specialization || (email ? specializationByEmail.get(email) : undefined),
+        };
+      });
+    } catch {
+      return authDoctors;
+    }
   } catch {
-    const legacyResponse = await api.get<ApiEnvelope<DoctorRecord[]>>('/doctors/search', {
-      params: params.specialty?.trim()
-        ? {
-            ...query,
-            specialty: params.specialty.trim(),
-          }
-        : query,
+    // Fallback: if auth list is unavailable, keep doctor profile search as backup.
+    const fallbackResponse = await api.get<ApiEnvelope<DoctorRecord[]>>('/doctors/search', {
+      params: doctorServiceParams,
     });
 
-    const doctors = unwrap(legacyResponse) || [];
+    const doctors = unwrap(fallbackResponse) || [];
     return doctors
       .map(normalizeDoctorOption)
       .filter((doctor): doctor is DoctorOption => Boolean(doctor));
