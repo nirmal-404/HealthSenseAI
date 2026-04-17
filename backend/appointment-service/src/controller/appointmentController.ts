@@ -72,7 +72,15 @@ export const confirmAppointmentController = catchAsync(async (req: XRequest, res
   const result = await confirmAppointmentService(
     String(req.params.id),
     req.user?.id || "system",
-    req.body?.notes
+    req.body?.notes,
+    {
+      doctorName: req.body?.doctorName,
+      patientName: req.body?.patientName,
+      patientEmail: req.body?.patientEmail,
+      patientPhone: req.body?.patientPhone,
+      doctorEmail: req.body?.doctorEmail,
+      doctorPhone: req.body?.doctorPhone,
+    }
   );
 
   const response: XResponse = {
@@ -102,7 +110,15 @@ export const rejectAppointmentController = catchAsync(async (req: XRequest, res:
   const result = await rejectAppointmentService(
     String(req.params.id),
     req.user?.id || "system",
-    req.body?.notes
+    req.body?.notes,
+    {
+      doctorName: req.body?.doctorName,
+      patientName: req.body?.patientName,
+      patientEmail: req.body?.patientEmail,
+      patientPhone: req.body?.patientPhone,
+      doctorEmail: req.body?.doctorEmail,
+      doctorPhone: req.body?.doctorPhone,
+    }
   );
 
   const response: XResponse = {

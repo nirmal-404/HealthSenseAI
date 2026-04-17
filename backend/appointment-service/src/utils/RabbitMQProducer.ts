@@ -75,7 +75,7 @@ class RabbitMQProducer {
   }
 
   /**
-   * Declare RabbitMQ exchanges
+   * Declare RabbitMQ exchanges, queues and bindings
    */
   private async declareExchanges(): Promise<void> {
     if (!this.channel) {
@@ -93,8 +93,23 @@ class RabbitMQProducer {
       console.log(
         `✓ Producer: Declared exchange: ${CONFIG.APPOINTMENT_EXCHANGE}`
       );
+
+      // Ensure queues and bindings exist (backup - notification service should also do this)
+      await this.channel.assertQueue(CONFIG.APPOINTMENT_QUEUE, {
+        durable: true,
+      });
+      
+      await this.channel.bindQueue(
+        CONFIG.APPOINTMENT_QUEUE,
+        CONFIG.APPOINTMENT_EXCHANGE,
+        "appointment.*"
+      );
+
+      console.log(
+        `✓ Producer: Declared queue and binding: ${CONFIG.APPOINTMENT_QUEUE} -> ${CONFIG.APPOINTMENT_EXCHANGE}`
+      );
     } catch (error: any) {
-      console.error("Producer: Error declaring exchanges:", error?.message);
+      console.error("Producer: Error declaring exchanges/queues:", error?.message);
       throw error;
     }
   }
@@ -141,7 +156,7 @@ class RabbitMQProducer {
 
       const result = this.channel.publish(
         CONFIG.APPOINTMENT_EXCHANGE,
-        CONFIG.APPOINTMENT_ROUTING_KEY,
+        "appointment.booked",
         messageBuffer,
         publishOptions
       );
@@ -153,54 +168,6 @@ class RabbitMQProducer {
       } else {
         console.warn(
           `⚠️  Producer: Failed to publish appointment.booked event`
-        );
-      }
-
-      return result;
-    } catch (error: any) {
-      console.error("❌ Producer: Error publishing event:", error?.message);
-      return false;
-    }
-  }
-
-  /**
-   * Publish appointment cancelled event
-   */
-  async publishAppointmentCancelled(appointmentData: any): Promise<boolean> {
-    if (!this.isConnected || !this.channel) {
-      console.error("Producer: Channel not connected, cannot publish event");
-      return false;
-    }
-
-    try {
-      const message = {
-        eventId: `appointment-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        eventType: "appointment.cancelled",
-        data: appointmentData,
-      };
-
-      const messageBuffer = Buffer.from(JSON.stringify(message));
-      const publishOptions = {
-        persistent: true,
-        contentType: "application/json",
-        messageId: message.eventId,
-      };
-
-      const result = this.channel.publish(
-        CONFIG.APPOINTMENT_EXCHANGE,
-        "appointment.cancelled",
-        messageBuffer,
-        publishOptions
-      );
-
-      if (result) {
-        console.log(
-          `✓ Producer: Published appointment.cancelled event | ID: ${message.eventId}`
-        );
-      } else {
-        console.warn(
-          `⚠️  Producer: Failed to publish appointment.cancelled event`
         );
       }
 
@@ -266,6 +233,71 @@ class RabbitMQProducer {
       } else {
         console.warn(
           `⚠️  Producer: Failed to publish appointment.confirmed event`
+        );
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error("❌ Producer: Error publishing event:", error?.message);
+      return false;
+    }
+  }
+
+  /**
+   * Publish appointment rejected event (doctor declined)
+   */
+  async publishAppointmentRejected(appointmentData: any): Promise<boolean> {
+    if (!this.isConnected || !this.channel) {
+      console.error("Producer: Channel not connected, cannot publish event");
+      return false;
+    }
+
+    try {
+      // Ensure all required fields are present
+      const payload = {
+        appointmentId: appointmentData.appointmentId,
+        patientId: appointmentData.patientId,
+        doctorId: appointmentData.doctorId,
+        appointmentDate: appointmentData.appointmentDate,
+        appointmentTime: appointmentData.appointmentTime,
+        doctorName: appointmentData.doctorName,
+        patientName: appointmentData.patientName,
+        patientEmail: appointmentData.patientEmail,
+        patientPhone: appointmentData.patientPhone,
+        doctorEmail: appointmentData.doctorEmail,
+        doctorPhone: appointmentData.doctorPhone,
+        status: appointmentData.status || "rejected",
+        notes: appointmentData.notes,
+      };
+
+      const message = {
+        eventId: `appointment-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        eventType: "appointment.rejected",
+        data: payload,
+      };
+
+      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const publishOptions = {
+        persistent: true,
+        contentType: "application/json",
+        messageId: message.eventId,
+      };
+
+      const result = this.channel.publish(
+        CONFIG.APPOINTMENT_EXCHANGE,
+        "appointment.rejected",
+        messageBuffer,
+        publishOptions
+      );
+
+      if (result) {
+        console.log(
+          `✓ Producer: Published appointment.rejected event | ID: ${message.eventId}`
+        );
+      } else {
+        console.warn(
+          `⚠️  Producer: Failed to publish appointment.rejected event`
         );
       }
 

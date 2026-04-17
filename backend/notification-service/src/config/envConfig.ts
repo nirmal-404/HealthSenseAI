@@ -15,10 +15,9 @@ export const CONFIG = {
   EMAIL_PASSWORD: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || "your-app-password",
   EMAIL_FROM: process.env.EMAIL_FROM || "HealthSense <noreply@healthsense.com>",
 
-  // SMS Configuration (Twilio)
-  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || "",
-  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || "",
-  TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || "+1234567890",
+  // SMS Configuration (SMSAPI.lk)
+  SMSAPI_API_KEY: process.env.SMSAPI_API_KEY || "",
+  SMSAPI_SENDER_ID: process.env.SMSAPI_SENDER_ID || "HealthSense",
 
   // RabbitMQ Configuration
   RABBITMQ_URL: process.env.RABBITMQ_URL || "amqp://guest:guest@rabbitmq:5672",

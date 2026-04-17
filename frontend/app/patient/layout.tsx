@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { RoleGuard } from '@/components/common/RoleGuard';
 import { useAuth } from '@/hooks/useAuth';
+import { NotificationBell } from '@/components/NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Bell,
   Bot,
   CalendarCheck2,
   Clock3,
@@ -201,12 +201,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                   />
                 </label>
 
-                <button
-                  aria-label="Notifications"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#dce5f2] bg-white text-slate-500"
-                >
-                  <Bell className="h-4 w-4" />
-                </button>
+                <NotificationBell userId={user?.id} />
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

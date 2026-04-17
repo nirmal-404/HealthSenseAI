@@ -2,15 +2,20 @@ import express from "express";
 import "dotenv/config";
 import "reflect-metadata";
 import cors from "cors";
+import { createServer } from "http";
 import routes from "./routes";
 import { CONFIG } from "./config/envConfig";
 import { connectDB } from "./config/db";
 import { requestLogger, corsHeaders, errorHandler } from "./middlewares";
 import EmailService from "./service/EmailService";
+import SMSService from "./service/SMSService";
 import RabbitMQService from "./service/RabbitMQService";
+import SocketIOService from "./service/SocketIOService";
 import {
   handleAppointmentBooked,
   handleConsultationCompleted,
+  handleAppointmentConfirmed,
+  handleAppointmentRejected,
 } from "./service/EventHandlers";
 
 const app = express();
@@ -63,6 +68,14 @@ const startServer = async () => {
       console.error("This may cause notification delivery failures.");
     }
 
+    // Verify SMS service connection
+    const smsConnected = await SMSService.verifyConnection();
+
+    if (!smsConnected && CONFIG.ENV === "production") {
+      console.warn("⚠️  WARNING: SMS service connection failed in production!");
+      console.warn("SMS notifications may not be delivered.");
+    }
+
     // Connect to RabbitMQ and set up event handlers
     console.log("\n🔗 Setting up RabbitMQ connection...");
     await RabbitMQService.connect();
@@ -74,11 +87,27 @@ const startServer = async () => {
       handleAppointmentBooked
     );
     RabbitMQService.registerEventHandler(
+      "appointment.confirmed",
+      handleAppointmentConfirmed
+    );
+    RabbitMQService.registerEventHandler(
+      "appointment.rejected",
+      handleAppointmentRejected
+    );
+    RabbitMQService.registerEventHandler(
       "consultation.completed",
       handleConsultationCompleted
     );
 
-    app.listen(CONFIG.PORT, () => {
+    // Create HTTP server for Socket.IO
+    const httpServer = createServer(app);
+
+    // Initialize Socket.IO for real-time notifications
+    console.log("\n🔌 Setting up Socket.IO for real-time notifications...");
+    SocketIOService.initialize(httpServer);
+
+    // Start the server
+    httpServer.listen(CONFIG.PORT, () => {
       console.log(`
 ╔════════════════════════════════════════════════════╗
 ║  ✓ Notification Service Started                    ║
@@ -86,6 +115,7 @@ const startServer = async () => {
 ║  Environment: ${CONFIG.ENV}                              ║
 ║  Email Service: ${emailConnected ? "✓ Connected" : "✗ Disconnected"}               ║
 ║  RabbitMQ: ${RabbitMQService.getConnectionStatus() ? "✓ Connected" : "✗ Disconnected"}                ║
+║  Socket.IO: ${SocketIOService.isConnected() ? "✓ Connected" : "✗ Initializing"}              ║
 ║  Database: ✓ Connected                              ║
 ╚════════════════════════════════════════════════════╝
       `);
@@ -101,7 +131,10 @@ const startServer = async () => {
 
       console.log("\n📨 Event Listeners Active:");
       console.log(`  - appointment.booked (${CONFIG.APPOINTMENT_QUEUE})`);
+      console.log(`  - appointment.confirmed`);
+      console.log(`  - appointment.rejected`);
       console.log(`  - consultation.completed (${CONFIG.CONSULTATION_QUEUE})`);
+      console.log("\n📱 Real-time Push Notifications: Enabled via Socket.IO");
       console.log("\nService is ready to process events from RabbitMQ!");
     });
   } catch (error) {

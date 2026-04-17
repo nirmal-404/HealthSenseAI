@@ -5,6 +5,9 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ToastProvider } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/useAuth";
+import { SocketIOProvider } from "@/components/providers/SocketIOProvider";
+import { RealtimeNotificationBell } from "@/components/common/RealtimeNotificationBell";
+import { SocketIODiagnostics } from "@/components/SocketIODiagnostics";
 import { Toaster } from "sonner";
 import HealthSenseBot from "@/components/ai/health-sense-bot";
 
@@ -31,11 +34,15 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <AuthProvider>
-          <ThemeProvider>
-            {children}
-            <HealthSenseBot />
-            <Toaster position="top-right" />
-          </ThemeProvider>
+          <SocketIOProvider enabled={true} debug={false}>
+            <ThemeProvider>
+              {children}
+              <RealtimeNotificationBell />
+              <SocketIODiagnostics />
+              <HealthSenseBot />
+              <Toaster position="top-right" />
+            </ThemeProvider>
+          </SocketIOProvider>
         </AuthProvider>
       </body>
     </html>

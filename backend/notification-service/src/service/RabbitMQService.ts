@@ -99,10 +99,11 @@ class RabbitMQService {
       await this.channel.assertQueue(CONFIG.APPOINTMENT_QUEUE, {
         durable: true,
       });
+      // Bind with wildcard to receive all appointment events
       await this.channel.bindQueue(
         CONFIG.APPOINTMENT_QUEUE,
         CONFIG.APPOINTMENT_EXCHANGE,
-        CONFIG.APPOINTMENT_ROUTING_KEY
+        "appointment.*"
       );
 
       console.log(
@@ -110,6 +111,9 @@ class RabbitMQService {
       );
       console.log(
         `✓ Declared appointment queue: ${CONFIG.APPOINTMENT_QUEUE}`
+      );
+      console.log(
+        `✓ Queue bound to exchange with pattern: appointment.*`
       );
 
       // Declare consultation exchange and queue
@@ -161,7 +165,9 @@ class RabbitMQService {
         CONFIG.APPOINTMENT_QUEUE,
         (msg: any) => {
           if (msg) {
-            this.handleMessage(msg, "appointment.booked");
+            // Extract routing key from message properties
+            const routingKey = msg.fields.routingKey || "appointment.booked";
+            this.handleMessage(msg, routingKey);
           }
         },
         { noAck: false }
@@ -198,11 +204,14 @@ class RabbitMQService {
   ): Promise<void> {
     try {
       const content = msg.content.toString();
-      const eventData = JSON.parse(content);
+      const message = JSON.parse(content);
 
       console.log(
         `📨 Received event: ${eventType} | MessageID: ${msg.properties.messageId}`
       );
+
+      // Extract the actual event data from the message wrapper
+      const eventData = message.data || message;
 
       // Get the handler for this event type
       const handler = this.eventHandlers.get(eventType);
