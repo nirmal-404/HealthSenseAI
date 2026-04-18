@@ -11,6 +11,13 @@ import { AppointmentNotificationPayload, ConsultationCompletedPayload } from "..
 export const handleAppointmentBooked = async (
   payload: AppointmentNotificationPayload
 ): Promise<void> => {
+  console.log(`
+🔔 [handleAppointmentBooked CALLED]
+   - appointmentId: ${payload.appointmentId}
+   - patientId: ${payload.patientId}
+   - doctorId: ${payload.doctorId}
+   - timestamp: ${Date.now()}`);
+  
   console.log(
     `\n Processing appointment.booked event for appointment ${payload.appointmentId}`
   );
@@ -65,11 +72,8 @@ export const handleAppointmentBooked = async (
     // Send doctor notifications
     console.log(`\n Sending doctor notifications...`);
 
-    if (!payload.doctorEmail || !payload.doctorPhone) {
-      console.warn(
-        `  Missing doctor contact info - Email: ${payload.doctorEmail ? "✓" : "✗"}, Phone: ${payload.doctorPhone ? "✓" : "✗"}`
-      );
-    } else {
+    // Doctor email - send if email is available
+    if (payload.doctorEmail) {
       const doctorEmailSubject = `New Appointment Booked - ${appointmentData.patientName}`;
       const doctorEmailContent = `
         <html>
@@ -101,8 +105,12 @@ export const handleAppointmentBooked = async (
         `${doctorEmailResult.success ? "✓" : "✗"} Doctor email: ${doctorEmailResult.success ? "sent" : "failed"}`
       );
       if (doctorEmailResult.success) successCount++;
+    } else {
+      console.warn(`  Missing doctor email`);
+    }
 
-      // Doctor SMS
+    // Doctor SMS - send if phone is available
+    if (payload.doctorPhone) {
       const doctorSMSMessage = `Hi Dr. ${appointmentData.doctorName}, a new appointment has been booked with you by ${appointmentData.patientName} on ${appointmentData.appointmentDate} at ${appointmentData.appointmentTime}. Please confirm at HealthSense. -HealthSense`;
       const doctorSMSResult = await SMSService.sendSMS(
         payload.doctorPhone,
@@ -112,6 +120,8 @@ export const handleAppointmentBooked = async (
         `${doctorSMSResult.success ? "✓" : "✗"} Doctor SMS: ${doctorSMSResult.success ? "sent" : "failed"}`
       );
       if (doctorSMSResult.success) successCount++;
+    } else {
+      console.warn(`  Missing doctor phone`);
     }
 
     // Send real-time push notifications via Socket.IO
@@ -297,7 +307,8 @@ export const handleAppointmentConfirmed = async (
     // Send patient notifications
     console.log(`\n👤 Sending patient notifications...`);
 
-    if (payload.patientEmail && payload.patientPhone) {
+    // Patient email
+    if (payload.patientEmail) {
       const patientEmailSubject = `Appointment Confirmed by Dr. ${appointmentData.doctorName}`;
       const patientEmailContent = `
         <html>
@@ -328,7 +339,12 @@ export const handleAppointmentConfirmed = async (
         `${patientEmailResult.success ? "✓" : "✗"} Patient email: ${patientEmailResult.success ? "sent" : "failed"}`
       );
       if (patientEmailResult.success) successCount++;
+    } else {
+      console.warn(`⚠️  Missing patient email`);
+    }
 
+    // Patient SMS
+    if (payload.patientPhone) {
       const patientSMSMessage = `Hi ${appointmentData.patientName}, your appointment with Dr. ${appointmentData.doctorName} on ${appointmentData.appointmentDate} at ${appointmentData.appointmentTime} has been confirmed. -HealthSense`;
       const patientSMSResult = await SMSService.sendSMS(
         payload.patientPhone,
@@ -339,13 +355,14 @@ export const handleAppointmentConfirmed = async (
       );
       if (patientSMSResult.success) successCount++;
     } else {
-      console.warn(`⚠️  Missing patient contact info for notifications`);
+      console.warn(`⚠️  Missing patient phone`);
     }
 
     // Send doctor notifications
     console.log(`\n👨‍⚕️ Sending doctor notifications...`);
 
-    if (payload.doctorEmail && payload.doctorPhone) {
+    // Doctor email
+    if (payload.doctorEmail) {
       const doctorEmailSubject = `Appointment Confirmed with ${appointmentData.patientName}`;
       const doctorEmailContent = `
         <html>
@@ -377,7 +394,12 @@ export const handleAppointmentConfirmed = async (
         `${doctorEmailResult.success ? "✓" : "✗"} Doctor email: ${doctorEmailResult.success ? "sent" : "failed"}`
       );
       if (doctorEmailResult.success) successCount++;
+    } else {
+      console.warn(`⚠️  Missing doctor email`);
+    }
 
+    // Doctor SMS
+    if (payload.doctorPhone) {
       const doctorSMSMessage = `Hi Dr. ${appointmentData.doctorName}, your appointment with ${appointmentData.patientName} on ${appointmentData.appointmentDate} at ${appointmentData.appointmentTime} is confirmed. -HealthSense`;
       const doctorSMSResult = await SMSService.sendSMS(
         payload.doctorPhone,
@@ -388,7 +410,7 @@ export const handleAppointmentConfirmed = async (
       );
       if (doctorSMSResult.success) successCount++;
     } else {
-      console.warn(`⚠️  Missing doctor contact info for notifications`);
+      console.warn(`⚠️  Missing doctor phone`);
     }
 
     // Send real-time push notifications via Socket.IO
@@ -440,7 +462,8 @@ export const handleAppointmentRejected = async (
     // Send patient notifications
     console.log(`\n👤 Sending patient notifications...`);
 
-    if (payload.patientEmail && payload.patientPhone) {
+    // Patient email
+    if (payload.patientEmail) {
       const patientEmailSubject = `Appointment Request - ${payload.notes || "Please try scheduling another time"}`;
       const patientEmailContent = `
         <html>
@@ -472,7 +495,12 @@ export const handleAppointmentRejected = async (
         `${patientEmailResult.success ? "✓" : "✗"} Patient email: ${patientEmailResult.success ? "sent" : "failed"}`
       );
       if (patientEmailResult.success) successCount++;
+    } else {
+      console.warn(`⚠️  Missing patient email`);
+    }
 
+    // Patient SMS
+    if (payload.patientPhone) {
       const patientSMSMessage = `Hi ${appointmentData.patientName}, your appointment request with Dr. ${appointmentData.doctorName} on ${appointmentData.appointmentDate} at ${appointmentData.appointmentTime} could not be confirmed. ${payload.notes ? "Reason: " + payload.notes : "Please try another time."}`;
       const patientSMSResult = await SMSService.sendSMS(
         payload.patientPhone,
@@ -483,13 +511,14 @@ export const handleAppointmentRejected = async (
       );
       if (patientSMSResult.success) successCount++;
     } else {
-      console.warn(`⚠️  Missing patient contact info for notifications`);
+      console.warn(`⚠️  Missing patient phone`);
     }
 
     // Send doctor notifications
     console.log(`\n👨‍⚕️ Sending doctor notifications...`);
 
-    if (payload.doctorEmail && payload.doctorPhone) {
+    // Doctor email
+    if (payload.doctorEmail) {
       const doctorEmailSubject = `Appointment Request Declined - ${appointmentData.patientName}`;
       const doctorEmailContent = `
         <html>
@@ -521,7 +550,12 @@ export const handleAppointmentRejected = async (
         `${doctorEmailResult.success ? "✓" : "✗"} Doctor email: ${doctorEmailResult.success ? "sent" : "failed"}`
       );
       if (doctorEmailResult.success) successCount++;
+    } else {
+      console.warn(`⚠️  Missing doctor email`);
+    }
 
+    // Doctor SMS
+    if (payload.doctorPhone) {
       const doctorSMSMessage = `Hi Dr. ${appointmentData.doctorName}, your decline of the appointment request with ${appointmentData.patientName} on ${appointmentData.appointmentDate} at ${appointmentData.appointmentTime} has been confirmed. The slot is now available. -HealthSense`;
       const doctorSMSResult = await SMSService.sendSMS(
         payload.doctorPhone,
@@ -532,7 +566,7 @@ export const handleAppointmentRejected = async (
       );
       if (doctorSMSResult.success) successCount++;
     } else {
-      console.warn(`⚠️  Missing doctor contact info for notifications`);
+      console.warn(`⚠️  Missing doctor phone`);
     }
 
     // Send real-time push notifications via Socket.IO

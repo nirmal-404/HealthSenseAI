@@ -205,10 +205,15 @@ class RabbitMQService {
     try {
       const content = msg.content.toString();
       const message = JSON.parse(content);
+      
+      const appointmentId = message.data?.appointmentId || 'UNKNOWN';
 
-      console.log(
-        `📨 Received event: ${eventType} | MessageID: ${msg.properties.messageId}`
-      );
+      console.log(`
+📨 [RabbitMQ MESSAGE RECEIVED]
+   - eventType: ${eventType}
+   - appointmentId: ${appointmentId}
+   - messageId: ${msg.properties.messageId}
+   - timestamp: ${Date.now()}`);
 
       // Extract the actual event data from the message wrapper
       const eventData = message.data || message;
@@ -233,7 +238,7 @@ class RabbitMQService {
         this.channel.ack(msg);
       }
 
-      console.log(`✓ Event processed successfully: ${eventType}`);
+      console.log(`✅ [MESSAGE ACK'D] Event processed: ${eventType}`);
     } catch (error: any) {
       console.error(
         `❌ Error processing message for event ${eventType}:`,
