@@ -16,6 +16,7 @@ import {
   createPrescription,
   getPrescription,
   listPrescriptionsByDoctor,
+  listPrescriptionsByPatient,
   verifyPrescription,
 } from "../controller/prescriptionController";
 import { allowRoles } from "../middlewares/allowRoles";
@@ -33,6 +34,7 @@ import {
   updateDoctorProfileValidation,
   doctorIdValidation,
   createPrescriptionValidation,
+  listPatientPrescriptionsValidation,
   listPrecscriptionsValidation,
   prescriptionIdValidation,
   verifyPrescriptionValidation,
@@ -147,6 +149,13 @@ router.get(
   requireAuth,
   validate(listPrecscriptionsValidation),
   listPrescriptionsByDoctor
+);
+
+router.get(
+  "/prescriptions/patient/:patientId",
+  requireAuth,
+  validate(listPatientPrescriptionsValidation),
+  listPrescriptionsByPatient
 );
 
 router.get(

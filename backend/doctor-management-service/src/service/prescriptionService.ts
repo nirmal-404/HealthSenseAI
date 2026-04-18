@@ -104,6 +104,20 @@ export class PrescriptionService {
     return this.repo.listByDoctor(doctorId, page, limit);
   }
 
+  /** Lists prescriptions for a patient with pagination. */
+  async listByPatient(patientId: string, page: number, limit: number, user: AuthUser) {
+    const role = user.role?.toLowerCase() || "";
+    if (role === "admin") {
+      return this.repo.listByPatient(patientId, page, limit);
+    }
+
+    if (role === "patient" && user.id === patientId) {
+      return this.repo.listByPatient(patientId, page, limit);
+    }
+
+    throw new ForbiddenError("Cannot view another patient's prescriptions");
+  }
+
   /** Public QR verification payload. */
   async verifyPublic(token: string) {
     const payload = verifyPrescriptionToken(token);

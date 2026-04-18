@@ -5,6 +5,11 @@ export interface XAuthUser {
     role: string;
 }
 
+export interface XAuthContextUser extends XAuthUser {
+    email: string;
+}
+
 export interface XRequest extends Request {
     user?: XAuthUser;
+    authUser?: XAuthContextUser;
 }

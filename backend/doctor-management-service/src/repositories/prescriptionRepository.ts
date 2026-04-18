@@ -28,4 +28,21 @@ export class PrescriptionRepository {
     ]);
     return { items: items as IPrescription[], total };
   }
+
+  async listByPatient(
+    patientId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: IPrescription[]; total: number }> {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      PrescriptionModel.find({ patientId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select("-pdfBuffer -verifyJwt"),
+      PrescriptionModel.countDocuments({ patientId }),
+    ]);
+    return { items: items as IPrescription[], total };
+  }
 }

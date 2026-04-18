@@ -21,24 +21,41 @@ import { catchAsync } from "../utils/catchAsync";
 import { XRequest } from "../types/XRequest";
 import { XResponse } from "../types/XResponse";
 
-const assertPatientAccess = async (req: XRequest, patientId: string) => {
+const findPatientByIdentifier = (identifier: string) =>
+  Patient.findOne({
+    $or: [{ patientId: identifier }, { userMongoId: identifier }],
+  });
+
+const assertPatientAccess = async (req: XRequest, patientIdentifier: string) => {
+  const patient = await findPatientByIdentifier(patientIdentifier).select(
+    "patientId userMongoId"
+  );
+
+  if (!patient) {
+    if (
+      req.user?.role === "patient" &&
+      req.user?.id &&
+      req.user.id === patientIdentifier
+    ) {
+      return patientIdentifier;
+    }
+
+    throw new ApiError(httpStatus.NOT_FOUND, "Patient not found");
+  }
+
   if (req.user?.role === "admin" || req.user?.role === "doctor") {
-    return;
+    return patient.patientId;
   }
 
   if (!req.user?.id) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized: Not logged in");
   }
 
-  const patient = await Patient.findOne({ patientId }).select("userMongoId");
-
-  if (!patient) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Patient not found");
-  }
-
   if (!patient.userMongoId || patient.userMongoId !== req.user.id) {
     throw new ApiError(httpStatus.FORBIDDEN, "Forbidden: Access denied");
   }
+
+  return patient.patientId;
 };
 
 const assertPrescriptionAccess = async (
@@ -63,11 +80,15 @@ const assertPrescriptionAccess = async (
       throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized: Not logged in");
     }
 
-    const patient = await Patient.findOne({ patientId: prescription.patientId }).select(
+    const patient = await findPatientByIdentifier(prescription.patientId).select(
       "userMongoId"
     );
 
     if (!patient) {
+      if (req.user.id === prescription.patientId) {
+        return;
+      }
+
       throw new ApiError(httpStatus.NOT_FOUND, "Patient not found");
     }
 
@@ -97,8 +118,7 @@ export const createPatientProfileController = catchAsync(async (req: XRequest, r
 });
 
 export const updatePatientProfileController = catchAsync(async (req: XRequest, res: Response) => {
-  const patientId = String(req.params.id);
-  await assertPatientAccess(req, patientId);
+  const patientId = await assertPatientAccess(req, String(req.params.id));
 
   const result = await updatePatientProfileService(patientId, req.body);
 
@@ -111,8 +131,7 @@ export const updatePatientProfileController = catchAsync(async (req: XRequest, r
 });
 
 export const uploadPatientDocumentController = catchAsync(async (req: XRequest, res: Response) => {
-  const patientId = String(req.params.id);
-  await assertPatientAccess(req, patientId);
+  const patientId = await assertPatientAccess(req, String(req.params.id));
 
   const result = await uploadPatientDocumentService(patientId, req.body);
 
@@ -125,8 +144,7 @@ export const uploadPatientDocumentController = catchAsync(async (req: XRequest, 
 });
 
 export const getPatientMedicalHistoryController = catchAsync(async (req: XRequest, res: Response) => {
-  const patientId = String(req.params.id);
-  await assertPatientAccess(req, patientId);
+  const patientId = await assertPatientAccess(req, String(req.params.id));
 
   const result = await getPatientMedicalHistoryService(patientId);
 
@@ -139,8 +157,7 @@ export const getPatientMedicalHistoryController = catchAsync(async (req: XReques
 });
 
 export const getPatientPrescriptionsController = catchAsync(async (req: XRequest, res: Response) => {
-  const patientId = String(req.params.id);
-  await assertPatientAccess(req, patientId);
+  const patientId = await assertPatientAccess(req, String(req.params.id));
 
   const result = await getPatientPrescriptionsService(patientId, {
     doctorId: req.query.doctorId ? String(req.query.doctorId) : undefined,
@@ -261,8 +278,7 @@ export const downloadPrescriptionController = catchAsync(async (req: XRequest, r
 });
 
 export const getPatientDashboardController = catchAsync(async (req: XRequest, res: Response) => {
-  const patientId = String(req.params.id);
-  await assertPatientAccess(req, patientId);
+  const patientId = await assertPatientAccess(req, String(req.params.id));
 
   const result = await getPatientDashboardService(patientId);
 

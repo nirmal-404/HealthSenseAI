@@ -133,6 +133,16 @@ export const listPrecscriptionsValidation = {
   }),
 };
 
+export const listPatientPrescriptionsValidation = {
+  params: Joi.object().keys({
+    patientId: Joi.string().required(),
+  }),
+  query: Joi.object().keys({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+  }),
+};
+
 export const prescriptionIdValidation = {
   params: Joi.object().keys({
     id: Joi.string().required(),

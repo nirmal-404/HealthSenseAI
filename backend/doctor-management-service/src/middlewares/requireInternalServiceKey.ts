@@ -16,6 +16,12 @@ export const requireInternalServiceKey = (
       .json({ message: "Unauthorized internal service call" });
   }
 
+  req.authUser = {
+    id: "internal-service",
+    role: "admin",
+    email: "",
+  };
+
   req.user = {
     id: "internal-service",
     role: "admin",

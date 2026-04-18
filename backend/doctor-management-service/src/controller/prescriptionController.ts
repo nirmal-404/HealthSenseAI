@@ -1,9 +1,38 @@
 import { NextFunction, Request, Response } from "express";
 import { sendSuccess } from "../utils/response";
 import { PrescriptionService } from "../service/prescriptionService";
+import { UnauthorizedError } from "../errors/AppError";
 
 function rxSvc(req: Request): PrescriptionService {
   return (req.app.locals as any).prescriptionService as PrescriptionService;
+}
+
+type ControllerActor = {
+  id: string;
+  role: string;
+  email: string;
+};
+
+function getActor(req: Request): ControllerActor {
+  const authUser = (req as any).authUser;
+  if (authUser?.id && authUser?.role) {
+    return {
+      id: String(authUser.id),
+      role: String(authUser.role),
+      email: String(authUser.email || ""),
+    };
+  }
+
+  const user = (req as any).user;
+  if (user?.id && user?.role) {
+    return {
+      id: String(user.id),
+      role: String(user.role),
+      email: String(user.email || ""),
+    };
+  }
+
+  throw new UnauthorizedError("Authentication required");
 }
 
 export async function createPrescription(
@@ -12,7 +41,7 @@ export async function createPrescription(
   next: NextFunction,
 ) {
   try {
-    const data = await rxSvc(req).create(req.body, req.authUser!);
+    const data = await rxSvc(req).create(req.body, getActor(req));
     return sendSuccess(res, data, "Prescription issued", 201);
   } catch (e) {
     next(e);
@@ -26,7 +55,7 @@ export async function getPrescription(
 ) {
   try {
     const id = String(req.params.id);
-    const data = await rxSvc(req).getById(id, req.authUser!);
+    const data = await rxSvc(req).getById(id, getActor(req));
     return sendSuccess(res, data, "OK");
   } catch (e) {
     next(e);
@@ -45,7 +74,27 @@ export async function listPrescriptionsByDoctor(
       doctorId,
       q.page,
       q.limit,
-      req.authUser!,
+      getActor(req),
+    );
+    return sendSuccess(res, { items, page: q.page, limit: q.limit, total }, "OK");
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function listPrescriptionsByPatient(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const q = req.query as unknown as { page: number; limit: number };
+    const patientId = String(req.params.patientId);
+    const { items, total } = await rxSvc(req).listByPatient(
+      patientId,
+      q.page,
+      q.limit,
+      getActor(req),
     );
     return sendSuccess(res, { items, page: q.page, limit: q.limit, total }, "OK");
   } catch (e) {

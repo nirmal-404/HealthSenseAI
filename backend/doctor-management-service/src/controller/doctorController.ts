@@ -2,9 +2,38 @@ import { NextFunction, Request, Response } from "express";
 import { sendSuccess } from "../utils/response";
 import { DoctorService } from "../service/doctorService";
 import httpStatus from "http-status";
+import { UnauthorizedError } from "../errors/AppError";
 
 function doctorSvc(req: Request): DoctorService {
   return (req.app.locals as any).doctorService as DoctorService;
+}
+
+type ControllerActor = {
+  id: string;
+  role: string;
+  email: string;
+};
+
+function getActor(req: Request): ControllerActor {
+  const authUser = (req as any).authUser;
+  if (authUser?.id && authUser?.role) {
+    return {
+      id: String(authUser.id),
+      role: String(authUser.role),
+      email: String(authUser.email || ""),
+    };
+  }
+
+  const user = (req as any).user;
+  if (user?.id && user?.role) {
+    return {
+      id: String(user.id),
+      role: String(user.role),
+      email: String(user.email || ""),
+    };
+  }
+
+  throw new UnauthorizedError("Authentication required");
 }
 
 export async function postRegister(
@@ -75,7 +104,7 @@ export async function blockTimeSlot(
     const updated = await doctorSvc(req).blockTimeSlot(
       doctorId,
       slotId,
-      req.authUser!,
+      getActor(req),
     );
     return sendSuccess(res, updated, "Time slot blocked");
   } catch (e) {
@@ -91,7 +120,7 @@ export async function getAppointments(
   try {
     const data = await doctorSvc(req).listAppointments(
       String(req.params.id),
-      req.authUser!,
+      getActor(req),
     );
     return sendSuccess(res, data, "OK");
   } catch (e) {
@@ -119,7 +148,7 @@ export async function putDoctor(
 ) {
   try {
     const id = String(req.params.id);
-    const d = await doctorSvc(req).upsertProfile(id, req.body, req.authUser!);
+    const d = await doctorSvc(req).upsertProfile(id, req.body, getActor(req));
     return sendSuccess(res, d, "Profile saved");
   } catch (e) {
     next(e);
@@ -150,7 +179,7 @@ export async function putAvailability(
       id,
       req.body.weeklySlots,
       req.body.blockedDates,
-      req.authUser!,
+      getActor(req),
     );
     return sendSuccess(res, d, "Availability updated");
   } catch (e) {
@@ -168,7 +197,7 @@ export async function patientReports(
     const data = await doctorSvc(req).patientReports(
       String(req.params.doctorId),
       String(req.params.patientId),
-      req.authUser!,
+      getActor(req),
       auth,
     );
     return sendSuccess(res, data, "OK");
@@ -186,7 +215,7 @@ export async function respondAppointment(
     const out = await doctorSvc(req).respondAppointment(
       String(req.params.id),
       req.body.action,
-      req.authUser!,
+      getActor(req),
     );
     return sendSuccess(res, out, "Appointment updated");
   } catch (e) {

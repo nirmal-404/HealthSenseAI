@@ -36,7 +36,8 @@ type DoctorServiceListResponse = {
   }>;
 };
 
-let preferredPrescriptionRoute: PrescriptionRouteMode = 'doctor-service';
+let preferredPrescriptionRoute: PrescriptionRouteMode = 'patient-service';
+let preferredPrescriptionReadRoute: PrescriptionRouteMode = 'patient-service';
 
 const isNotFound = (error: any) => error?.response?.status === 404;
 
@@ -61,6 +62,78 @@ const normalizeDoctorServicePrescription = (
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   };
+};
+
+const dedupeAndSortPrescriptions = (items: PrescriptionRecord[]) => {
+  const map = new Map<string, PrescriptionRecord>();
+
+  for (const item of items) {
+    map.set(item.prescriptionId, item);
+  }
+
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(b.issuedDate).getTime() - new Date(a.issuedDate).getTime()
+  );
+};
+
+const getDoctorPrescriptionsViaDoctorService = async (doctorId: string) => {
+  const response = await api.get<ApiEnvelope<DoctorServiceListResponse>>(
+    `/doctors/prescriptions/doctor/${doctorId}`,
+    {
+      params: {
+        page: 1,
+        limit: 100,
+      },
+    }
+  );
+
+  const data = unwrap(response);
+  const items = data?.items || [];
+  return items.map(normalizeDoctorServicePrescription);
+};
+
+const getDoctorPrescriptionsViaPatientService = async (
+  doctorId: string,
+  filters: PrescriptionListFilters = {}
+) => {
+  const response = await api.get<ApiEnvelope<PrescriptionRecord[]>>(
+    `/patients/prescriptions/doctor/${doctorId}`,
+    {
+      params: buildFilterParams(filters),
+    }
+  );
+
+  return unwrap(response) || [];
+};
+
+const getPatientPrescriptionsViaPatientService = async (
+  patientId: string,
+  filters: PrescriptionListFilters = {}
+) => {
+  const response = await api.get<ApiEnvelope<PrescriptionRecord[]>>(
+    `/patients/${patientId}/prescriptions`,
+    {
+      params: buildFilterParams(filters),
+    }
+  );
+
+  return unwrap(response) || [];
+};
+
+const getPatientPrescriptionsViaDoctorService = async (patientId: string) => {
+  const response = await api.get<ApiEnvelope<DoctorServiceListResponse>>(
+    `/doctors/prescriptions/patient/${patientId}`,
+    {
+      params: {
+        page: 1,
+        limit: 100,
+      },
+    }
+  );
+
+  const data = unwrap(response);
+  const items = data?.items || [];
+  return items.map(normalizeDoctorServicePrescription);
 };
 
 const buildFilterParams = (filters: PrescriptionListFilters = {}) => {
@@ -152,69 +225,86 @@ export async function getDoctorPrescriptions(
   doctorId: string,
   filters: PrescriptionListFilters = {}
 ): Promise<PrescriptionRecord[]> {
-  const getViaDoctorService = async () => {
-    const response = await api.get<ApiEnvelope<DoctorServiceListResponse>>(
-      `/doctors/prescriptions/doctor/${doctorId}`,
-      {
-        params: {
-          page: 1,
-          limit: 100,
-        },
-      }
-    );
+  const primaryFetcher =
+    preferredPrescriptionReadRoute === 'patient-service'
+      ? () => getDoctorPrescriptionsViaPatientService(doctorId, filters)
+      : () => getDoctorPrescriptionsViaDoctorService(doctorId);
 
-    const data = unwrap(response);
-    const items = data?.items || [];
-    return items.map(normalizeDoctorServicePrescription);
-  };
+  const secondaryFetcher =
+    preferredPrescriptionReadRoute === 'patient-service'
+      ? () => getDoctorPrescriptionsViaDoctorService(doctorId)
+      : () => getDoctorPrescriptionsViaPatientService(doctorId, filters);
 
-  const getViaPatientService = async () => {
-    const response = await api.get<ApiEnvelope<PrescriptionRecord[]>>(
-      `/patients/prescriptions/doctor/${doctorId}`,
-      {
-        params: buildFilterParams(filters),
-      }
-    );
+  const [primaryResult, secondaryResult] = await Promise.allSettled([
+    primaryFetcher(),
+    secondaryFetcher(),
+  ]);
 
-    return unwrap(response) || [];
-  };
+  const merged = dedupeAndSortPrescriptions([
+    ...(primaryResult.status === 'fulfilled' ? primaryResult.value : []),
+    ...(secondaryResult.status === 'fulfilled' ? secondaryResult.value : []),
+  ]);
 
-  if (preferredPrescriptionRoute === 'doctor-service') {
-    try {
-      return await getViaDoctorService();
-    } catch (error: any) {
-      if (!isNotFound(error)) {
-        throw error;
-      }
-
-      const fallbackResult = await getViaPatientService();
-      preferredPrescriptionRoute = 'patient-service';
-      return fallbackResult;
-    }
+  if (primaryResult.status === 'fulfilled' && primaryResult.value.length > 0) {
+    preferredPrescriptionReadRoute =
+      preferredPrescriptionReadRoute === 'patient-service'
+        ? 'patient-service'
+        : 'doctor-service';
+  } else if (secondaryResult.status === 'fulfilled' && secondaryResult.value.length > 0) {
+    preferredPrescriptionReadRoute =
+      preferredPrescriptionReadRoute === 'patient-service'
+        ? 'doctor-service'
+        : 'patient-service';
   }
 
-  try {
-    return await getViaPatientService();
-  } catch (error: any) {
-    if (!isNotFound(error)) {
-      throw error;
-    }
-
-    const fallbackResult = await getViaDoctorService();
-    preferredPrescriptionRoute = 'doctor-service';
-    return fallbackResult;
+  if (merged.length > 0) {
+    return merged;
   }
+
+  if (primaryResult.status === 'fulfilled' || secondaryResult.status === 'fulfilled') {
+    return [];
+  }
+
+  const preferredError =
+    primaryResult.status === 'rejected' ? primaryResult.reason : secondaryResult.reason;
+  const fallbackError =
+    primaryResult.status === 'rejected' && !isNotFound(primaryResult.reason)
+      ? primaryResult.reason
+      : secondaryResult.status === 'rejected' && !isNotFound(secondaryResult.reason)
+        ? secondaryResult.reason
+        : preferredError;
+
+  throw fallbackError;
 }
 
 export async function getPatientPrescriptions(
   patientId: string,
   filters: PrescriptionListFilters = {}
 ): Promise<PrescriptionRecord[]> {
-  const response = await api.get<ApiEnvelope<PrescriptionRecord[]>>(`/patients/${patientId}/prescriptions`, {
-    params: buildFilterParams(filters),
-  });
+  let patientServiceItems: PrescriptionRecord[] = [];
 
-  return unwrap(response) || [];
+  try {
+    patientServiceItems = await getPatientPrescriptionsViaPatientService(patientId, filters);
+  } catch (error: any) {
+    if (!isNotFound(error)) {
+      throw error;
+    }
+  }
+
+  if (patientServiceItems.length > 0) {
+    return patientServiceItems;
+  }
+
+  try {
+    const doctorServiceItems = await getPatientPrescriptionsViaDoctorService(patientId);
+    return dedupeAndSortPrescriptions([...patientServiceItems, ...doctorServiceItems]);
+  } catch (error: any) {
+    if (patientServiceItems.length > 0 || isNotFound(error)) {
+      return patientServiceItems;
+    }
+
+    throw error;
+  }
 }
 
 export async function getPrescriptionById(prescriptionId: string): Promise<PrescriptionRecord> {

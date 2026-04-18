@@ -10,12 +10,17 @@ const requireAuth = (req: XRequest, res: Response, next: NextFunction) => {
   try {
     const userIdHeader = req.headers["x-user-id"];
     const userRoleHeader = req.headers["x-user-role"];
+    const userEmailHeader = req.headers["x-user-email"];
 
     if (userIdHeader) {
+      const id = String(userIdHeader);
+      const role = String(userRoleHeader || "");
+      const email = String(userEmailHeader || "");
       req.user = {
-        id: String(userIdHeader),
-        role: String(userRoleHeader || ""),
+        id,
+        role,
       };
+      req.authUser = { id, role, email };
       return next();
     }
 
@@ -28,10 +33,13 @@ const requireAuth = (req: XRequest, res: Response, next: NextFunction) => {
     }
 
     const decodedToken = jwt.verify(token, CONFIG.JWT_SECRET) as JWTPayload;
+    const id = decodedToken.id;
+    const role = decodedToken.role;
     req.user = {
-      id: decodedToken.id,
-      role: decodedToken.role,
+      id,
+      role,
     };
+    req.authUser = { id, role, email: "" };
 
     return next();
   } catch (error) {

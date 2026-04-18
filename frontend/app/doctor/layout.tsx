@@ -44,7 +44,6 @@ const sidebarItems: SidebarItem[] = [
   { label: 'Prescriptions', href: '/doctor/prescriptions', icon: Pill },
   { label: 'Payments', href: '/doctor/payments', icon: CreditCard },
   { label: 'Telemedicine', href: '/doctor/telemedicine', icon: Video },
-  { label: 'Notifications', href: '/doctor/notifications', icon: Bell },
 ];
 
 const pageTitles: Record<string, string> = {
@@ -54,7 +53,6 @@ const pageTitles: Record<string, string> = {
   '/doctor/prescriptions': 'Prescriptions',
   '/doctor/payments': 'Payments',
   '/doctor/telemedicine': 'Telemedicine',
-  '/doctor/notifications': 'Notifications',
 };
 
 function initials(firstName?: string, lastName?: string) {

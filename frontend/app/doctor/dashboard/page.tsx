@@ -118,7 +118,7 @@ const quickActions: QuickAction[] = [
 
 const todaySchedule: ScheduleItem[] = [
   {
-    patient: 'Sanjaya Perera',
+    patient: 'Ravindu Perera',
     type: 'Video',
     time: '09:00 AM - 09:30 AM',
     reason: 'Diabetes follow-up consultation',
