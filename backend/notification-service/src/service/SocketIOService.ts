@@ -46,7 +46,7 @@ class SocketIOService {
         this.connectedUsers.set(userId, socket.id);
         socket.join(`user-${userId}`); // Join user-specific room
         console.log(
-          `👤 User ${userId} registered with socket ${socket.id}`
+          `👤 [SOCKET REGISTRATION] userId: ${userId} | socketId: ${socket.id} | Room: user-${userId}`
         );
       });
 
@@ -83,6 +83,15 @@ class SocketIOService {
     }
 
     try {
+      console.log(`
+🔔 [notifyAppointmentBooked CALLED]
+   - appointmentId: ${payload.appointmentId}
+   - patientId: ${payload.patientId}
+   - doctorId: ${payload.doctorId}
+   - patientName: ${payload.patientName}
+   - doctorName: ${payload.doctorName}
+   - timestamp: ${Date.now()}`);
+      
       const notification = {
         type: "appointment.booked",
         appointmentId: payload.appointmentId,
@@ -102,22 +111,21 @@ class SocketIOService {
 
       // Send to patient
       if (payload.patientId) {
+        console.log(`📤 Emitting to room: user-${payload.patientId} (PATIENT)`);
         this.io.to(`user-${payload.patientId}`).emit("notification", notification);
         console.log(
-          `📱 Socket notification sent to patient: ${payload.patientId}`
+          `✅ [EMITTED] Socket notification sent to patient: ${payload.patientId}`
         );
       }
 
       // Send to doctor
       if (payload.doctorId) {
+        console.log(`📤 Emitting to room: user-${payload.doctorId} (DOCTOR)`);
         this.io.to(`user-${payload.doctorId}`).emit("notification", notification);
         console.log(
-          `📱 Socket notification sent to doctor: ${payload.doctorId}`
+          `✅ [EMITTED] Socket notification sent to doctor: ${payload.doctorId}`
         );
       }
-
-      // Broadcast to all connected clients (optional - for dashboard/admin)
-      this.io.emit("appointment-booked", notification);
     } catch (error: any) {
       console.error(
         `❌ Error sending appointment booked notification via Socket.IO: ${error?.message}`
@@ -162,7 +170,13 @@ class SocketIOService {
         );
       }
 
-      this.io.emit("appointment-confirmed", notification);
+      // Send to doctor
+      if (payload.doctorId) {
+        this.io.to(`user-${payload.doctorId}`).emit("notification", notification);
+        console.log(
+          `📱 Socket notification sent to doctor: ${payload.doctorId}`
+        );
+      }
     } catch (error: any) {
       console.error(
         `❌ Error sending appointment confirmed notification via Socket.IO: ${error?.message}`
@@ -205,7 +219,13 @@ class SocketIOService {
         );
       }
 
-      this.io.emit("appointment-rejected", notification);
+      // Send to doctor
+      if (payload.doctorId) {
+        this.io.to(`user-${payload.doctorId}`).emit("notification", notification);
+        console.log(
+          `📱 Socket notification sent to doctor: ${payload.doctorId}`
+        );
+      }
     } catch (error: any) {
       console.error(
         `❌ Error sending appointment rejected notification via Socket.IO: ${error?.message}`
@@ -249,8 +269,6 @@ class SocketIOService {
       if (payload.doctorId) {
         this.io.to(`user-${payload.doctorId}`).emit("notification", notification);
       }
-
-      this.io.emit("consultation-completed", notification);
     } catch (error: any) {
       console.error(
         `❌ Error sending consultation completed notification via Socket.IO: ${error?.message}`
