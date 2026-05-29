@@ -51,3 +51,10 @@ PUT /api/appointments/{id}/reject (doctor)
 GET /api/appointments/patient/{patientId}
 GET /api/appointments/doctor/{doctorId}
 GET /api/appointments/{id}/status
+
+Internal Endpoints:
+
+GET /internal/appointments/{id}/payment-context
+PUT /internal/appointments/{id}/payment-status
+GET /appointments/{id}
+POST /appointments/confirm-payment

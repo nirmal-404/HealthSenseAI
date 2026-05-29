@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Appointment Service - RabbitMQ Test APIs",
+    "description": "Test collection for RabbitMQ message publishing in Appointment Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. RabbitMQ Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/test/rabbitmq-status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": ["test", "rabbitmq-status"]
+        },
+        "description": "Check RabbitMQ Producer connection status"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Publish Appointment Booked",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": \"64f1e9c2d5a8b3f2e1c9d4b5\",\n  \"patientId\": \"64f1e9c2d5a8b3f2e1c9d4a0\",\n  \"patientEmail\": \"patient@example.com\",\n  \"patientName\": \"John Doe\",\n  \"patientPhone\": \"+1234567890\",\n  \"doctorId\": \"64f1e9c2d5a8b3f2e1c9d4c1\",\n  \"doctorName\": \"Dr. Jane Smith\",\n  \"doctorEmail\": \"doctor@example.com\",\n  \"doctorPhone\": \"+0987654321\",\n  \"appointmentDate\": \"2024-04-20\",\n  \"appointmentTime\": \"14:30\",\n  \"reason\": \"General Checkup\",\n  \"status\": \"booked\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/test/publish-appointment-booked",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": ["test", "publish-appointment-booked"]
+        },
+        "description": "Publish appointment booked event to RabbitMQ"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Publish Appointment Cancelled",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": \"64f1e9c2d5a8b3f2e1c9d4b5\",\n  \"patientId\": \"64f1e9c2d5a8b3f2e1c9d4a0\",\n  \"patientEmail\": \"patient@example.com\",\n  \"patientName\": \"John Doe\",\n  \"patientPhone\": \"+1234567890\",\n  \"doctorId\": \"64f1e9c2d5a8b3f2e1c9d4c1\",\n  \"doctorName\": \"Dr. Jane Smith\",\n  \"doctorEmail\": \"doctor@example.com\",\n  \"doctorPhone\": \"+0987654321\",\n  \"appointmentDate\": \"2024-04-20\",\n  \"appointmentTime\": \"14:30\",\n  \"cancelReason\": \"Patient requested cancellation\",\n  \"status\": \"cancelled\",\n  \"cancelledAt\": \"2024-04-15T10:30:45.123Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/test/publish-appointment-cancelled",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": ["test", "publish-appointment-cancelled"]
+        },
+        "description": "Publish appointment cancelled event to RabbitMQ"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Publish Appointment Rescheduled",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": \"64f1e9c2d5a8b3f2e1c9d4b5\",\n  \"patientId\": \"64f1e9c2d5a8b3f2e1c9d4a0\",\n  \"patientEmail\": \"patient@example.com\",\n  \"patientName\": \"John Doe\",\n  \"patientPhone\": \"+1234567890\",\n  \"doctorId\": \"64f1e9c2d5a8b3f2e1c9d4c1\",\n  \"doctorName\": \"Dr. Jane Smith\",\n  \"doctorEmail\": \"doctor@example.com\",\n  \"doctorPhone\": \"+0987654321\",\n  \"oldAppointmentDate\": \"2024-04-20\",\n  \"oldAppointmentTime\": \"14:30\",\n  \"newAppointmentDate\": \"2024-04-22\",\n  \"newAppointmentTime\": \"10:00\",\n  \"reason\": \"General Checkup\",\n  \"rescheduleReason\": \"Doctor unavailable\",\n  \"status\": \"rescheduled\",\n  \"rescheduledAt\": \"2024-04-15T10:30:45.123Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/test/publish-appointment-rescheduled",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": ["test", "publish-appointment-rescheduled"]
+        },
+        "description": "Publish appointment rescheduled event to RabbitMQ"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:50003",
+      "type": "string"
+    }
+  ]
+}

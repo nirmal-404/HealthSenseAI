@@ -1,20 +1,15 @@
 import { Request } from 'express';
-export interface XRequest extends Request {
-    user: XAuthUser;
-    headers: Request['headers'] & {
-        files?: Array<{
-            fileName: string;
-            fileType: string;
-        }>;
-    };
-}
+
 export interface XAuthUser {
-    id: number;
+    id: string;
+    role: string;
+}
+
+export interface XAuthContextUser extends XAuthUser {
     email: string;
-    displayName: string;
-    phoneNumber: string;
-    clientId: number;
-    companyId: number;
-    isMaster: boolean;
-    isActive: boolean;
+}
+
+export interface XRequest extends Request {
+    user?: XAuthUser;
+    authUser?: XAuthContextUser;
 }

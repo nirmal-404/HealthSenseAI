@@ -59,3 +59,7 @@ GET /api/doctors/{id}/time-slots
 PUT /api/doctors/{id}/time-slots/{slotId}/block
 GET /api/doctors/search?specialty={specialty}
 GET /api/doctors/{id}/appointments
+
+Internal Endpoints:
+
+GET /internal/doctors/{id}/billing
