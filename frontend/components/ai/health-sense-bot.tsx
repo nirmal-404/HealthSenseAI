@@ -236,7 +236,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
         data: data,
       },
     ]);
-    setView('analysis');
+    setView('chat');
   };
 
   const getUrgencyColor = (level: string) => {
@@ -429,7 +429,7 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
   const chatWindow = (
     <Card
       className={cn(
-        'relative flex flex-col overflow-hidden border-0 ring-0 gap-0',
+        'relative flex min-h-0 flex-col overflow-hidden border-0 ring-0 gap-0',
         isPopupMode
           ? 'mb-4 h-[600px] w-[400px] rounded-3xl border border-slate-200/90 bg-white shadow-2xl'
           : cn('h-full w-full py-0 px-0', isIntro ? 'bg-white shadow-none' : 'bg-white shadow-lg')
@@ -458,7 +458,10 @@ export default function HealthSenseBot({ mode = 'popup', className }: HealthSens
 
       <CardContent
         ref={scrollRef}
-        className={cn('relative z-10 flex-1 overflow-hidden', isIntro ? 'p-0' : 'p-5 bg-slate-50')}
+        className={cn(
+          'relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain',
+          isIntro ? 'p-0' : 'p-5 bg-slate-50'
+        )}
       >
         {view === 'chat' ? (
           isIntro ? (
